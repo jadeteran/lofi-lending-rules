@@ -1,56 +1,36 @@
-# Cozy Guideline Study Corner
+# AI Guideline Assistant
 
-Build a calm, lofi-girl-themed interface that reads live from your existing `lofi_guidelines` Supabase table, with instant keyword search, a loan-type filter, citation cards, and a relaxed empty state.
+Replace the external Supabase-backed guideline list with an interactive AI assistant that analyzes loan scenarios. Keep the exact lofi theme, layout shell, and alphabetical Loan Program dropdown.
 
-## Connecting your existing Supabase
+## What changes
 
-This Lovable project currently has no backend wired in, so first I'll connect to your existing Supabase project. You'll be asked to securely paste two values (I'll request them; you find them in your Supabase project under Settings → API):
+### 1. Backend AI server function (`src/lib/guidelines.functions.ts`)
+- Remove the Supabase query (`getGuidelines`) and the `Guideline` type/`@supabase/supabase-js` import.
+- Keep `LOAN_TYPES` (the fixed 8-item list, already alphabetical by category).
+- Add a new `analyzeScenario` `createServerFn({ method: "POST" })` that:
+  - Validates input `{ loanType: string, scenario: string }`.
+  - Calls **Lovable AI** (`google/gemini-3-flash-preview`) via the AI SDK + Lovable AI Gateway helper, reading `LOVABLE_API_KEY` inside the handler.
+  - Uses structured output (`Output.object`) to return three sections:
+    - `guidelineRequirements` — standard guideline requirements for that program.
+    - `roadblocks` — potential roadblocks/red flags.
+    - `documentation` — documents to request from the borrower to clear it.
+  - System prompt frames the model as a senior mortgage underwriting assistant for the selected loan program.
+- Add the Lovable AI Gateway provider helper at `src/lib/ai-gateway.server.ts`.
+- Ensure `LOVABLE_API_KEY` is provisioned (auto-created if missing).
 
-- **Project URL** (e.g. `https://xxxx.supabase.co`)
-- **Publishable / anon public key** (the public one, safe for the browser)
+### 2. Frontend rewrite (`src/routes/index.tsx`)
+- Drop the loader/`useSuspenseQuery` data fetch and the search-filter card grid.
+- Keep `Shell`, the lofi gradient, Nunito font, and header (retitle to "AI Guideline Assistant" while keeping the cozy tone).
+- Keep the alphabetical Loan Program `<select>` (from `LOAN_TYPES`).
+- Add a multiline scenario input bar ("Paste a tough stip or describe the loan scenario…") + a Submit button.
+- On submit, call `analyzeScenario` via `useServerFn` inside a `useMutation` (loading state on the button, disabled while pending).
+- Render the AI response as three themed cards reusing the existing card styling: **Guideline Requirements**, **Potential Roadblocks**, **Documentation to Request**.
+- Empty/idle state keeps the relaxed placeholder vibe ("Queue the beats and drop a scenario to analyze…"); error state reuses the existing "record skipped a beat" styling and surfaces rate-limit/credit messages.
 
-For instant client-side search/filtering to work, the `lofi_guidelines` table needs a Row-Level Security policy allowing public read (`SELECT TO anon`). If you'd rather not expose it to anon, tell me and I'll route reads through an authenticated path instead.
+### 3. Cleanup
+- The Supabase secrets (`LOFI_SUPABASE_URL`, `LOFI_SUPABASE_ANON_KEY`) are no longer used by the main view; leave them in place (harmless) unless you want them removed.
 
-## What gets built
-
-```text
-┌──────────────────────────────────────────────┐
-│   🎧 Cozy Guideline Study Corner              │
-│   relaxed subtitle                            │
-│                                               │
-│  [ 🔍 search rule_name + guideline_text ]     │
-│  [ Loan Type ▾ ]                              │
-│                                               │
-│  ┌── card ──┐  ┌── card ──┐                   │
-│  │ rule_name│  │ rule_name│                   │
-│  │ category │  │ category │                   │
-│  │ text…    │  │ text…    │                   │
-│  │ Source   │  │ Source   │                   │
-│  │ Track #id│  │ Track #id│                   │
-│  └──────────┘  └──────────┘                   │
-└──────────────────────────────────────────────┘
-```
-
-1. **Aesthetic** — Soft pastel theme: deep blues, warm creams, gentle anime study-vibe accents. Wide padding, legible rounded font, soft shadows, calm spacing. Theme tokens added to `src/styles.css`.
-2. **Search bar** — Filters across `rule_name` and `guideline_text` (case-insensitive), updating instantly as you type.
-3. **Loan Type dropdown** — Fixed list in your order: Conventional - Fannie Mae, Conventional - Freddie Mac, Government - FHA, Government - VA, HELOC / 2nd Liens, Jumbo - Non-Conforming, Non-QM / DSCR, Private Money / Hard Money. Plus an "All loan types" option.
-4. **Live query** — Reads directly from `lofi_guidelines`; results refresh instantly on type/toggle. Picks up cron-updated rows on load/refetch.
-5. **Guideline cards** — Each row shows `rule_name`, a `category` pill, `guideline_text`, and a subtle tiny footer: `Source Track Checked: ID #[id]`.
-6. **Empty state** — Relaxed note: "No stips found... keep sipping your coffee."
-
-## Technical details
-
-- **Supabase client**: add `@supabase/supabase-js`; create `src/integrations/supabase/client.ts` reading `import.meta.env.VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`. Secrets stored via the secrets tool (both `VITE_` client vars).
-- **Data fetch**: A `createServerFn` (`src/lib/guidelines.functions.ts`) using a server publishable client to `select id, loan_type, category, rule_name, guideline_text from lofi_guidelines`, fetched via TanStack Query in the route loader (`ensureQueryData`) + `useSuspenseQuery`. Search and loan-type filtering done client-side over the fetched rows for instant feedback (no per-keystroke round-trips). Route gets `errorComponent` + `notFoundComponent`.
-- **UI**: rewrite `src/routes/index.tsx` as the Study Corner (replacing the underwriting form), with the search input + select as controlled `useState`, and a memoized filtered list. Lightweight, no heavy libs.
-- **Cleanup**: the old underwriting report files (`underwriting.functions.ts`, `ai-gateway.server.ts`, related markdown styles) are left in place unless you want them removed.
-
-Confirm and I'll connect Supabase and build it.  
-  
-ADDTIONAL NOTES:  
-  
-The plan looks absolutely flawless. Please go ahead and connect my existing Supabase project. 
-
-Regarding the Row-Level Security (RLS) question: Yes, please go ahead and route the reads through the public read policy (SELECT TO anon) since this is my own internal desktop processing toolkit. 
-
-I am ready to paste the Project URL and Publishable / anon public key as soon as you request them. Let's build the Cozy Guideline Study Corner!
+## Technical notes
+- AI runs server-side only; `LOVABLE_API_KEY` never reaches the browser.
+- Uses the AI SDK structured-output `Output` API with a small schema (3 string fields) to stay within model limits.
+- No database, no GitHub JSON, no manual guideline management — output is generated on demand.
