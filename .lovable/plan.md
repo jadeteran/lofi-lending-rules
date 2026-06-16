@@ -1,48 +1,56 @@
-# UnderwriterPro — Plan
+# Cozy Guideline Study Corner
 
-A fast, minimal single-page app that maps directly to the schema's two interactive inputs and one AI action, rendering a structured "Full dashboard report."
+Build a calm, lofi-girl-themed interface that reads live from your existing `lofi_guidelines` Supabase table, with instant keyword search, a loan-type filter, citation cards, and a relaxed empty state.
 
-## What the schema defines (mapped to UI)
-- **Loan Program Selection** → dropdown `<select>` with exactly 7 options:
-  Conventional - Fannie Mae, Conventional - Freddie Mac, Government - FHA, Government - VA, Non-QM / DSCR, Jumbo - Non-Conforming, HELOC / 2nd Liens
-- **Underwriting Scenario** (`ask_user_underwriting_scenario`, type `in`, title "Underwriting Scenario") → multiline `<textarea>`
-- **Analyze / Generate Report** action → calls Lovable AI with the system instruction + report template from the schema's `node_step_underwriting_report`, returns markdown
-- App title/description from schema: "UnderwriterPro" / "Analyze complex mortgage underwriting scenarios against official government loan program guidelines."
+## Connecting your existing Supabase
 
-## UI (clean, scannable, no clutter)
-Single route `/`, black/white minimal theme (matches default theme tokens `#1a1a1a` / `#ffffff`), generous whitespace, clear section headers.
+This Lovable project currently has no backend wired in, so first I'll connect to your existing Supabase project. You'll be asked to securely paste two values (I'll request them; you find them in your Supabase project under Settings → API):
+
+- **Project URL** (e.g. `https://xxxx.supabase.co`)
+- **Publishable / anon public key** (the public one, safe for the browser)
+
+For instant client-side search/filtering to work, the `lofi_guidelines` table needs a Row-Level Security policy allowing public read (`SELECT TO anon`). If you'd rather not expose it to anon, tell me and I'll route reads through an authenticated path instead.
+
+## What gets built
 
 ```text
- UnderwriterPro
- Analyze mortgage scenarios against loan program guidelines
- ────────────────────────────────────────────
- Loan Program        [ Select ▾ ]
- Underwriting Scenario
- [  textarea …                              ]
- [ Generate Report ]
- ────────────────────────────────────────────
- REPORT (rendered after generation)
-   Executive Loan Summary
-   File Core Data Matrix (Borrower / Loan Transaction)
-   Portal Conditions & Status Translation
-   Strategic Loan Scenario Fixes
-   Copy-Paste to LO   [Copy]
+┌──────────────────────────────────────────────┐
+│   🎧 Cozy Guideline Study Corner              │
+│   relaxed subtitle                            │
+│                                               │
+│  [ 🔍 search rule_name + guideline_text ]     │
+│  [ Loan Type ▾ ]                              │
+│                                               │
+│  ┌── card ──┐  ┌── card ──┐                   │
+│  │ rule_name│  │ rule_name│                   │
+│  │ category │  │ category │                   │
+│  │ text…    │  │ text…    │                   │
+│  │ Source   │  │ Source   │                   │
+│  │ Track #id│  │ Track #id│                   │
+│  └──────────┘  └──────────┘                   │
+└──────────────────────────────────────────────┘
 ```
 
-The report renders the AI's markdown output into the dashboard sections defined in the schema's render-outputs node.
+1. **Aesthetic** — Soft pastel theme: deep blues, warm creams, gentle anime study-vibe accents. Wide padding, legible rounded font, soft shadows, calm spacing. Theme tokens added to `src/styles.css`.
+2. **Search bar** — Filters across `rule_name` and `guideline_text` (case-insensitive), updating instantly as you type.
+3. **Loan Type dropdown** — Fixed list in your order: Conventional - Fannie Mae, Conventional - Freddie Mac, Government - FHA, Government - VA, HELOC / 2nd Liens, Jumbo - Non-Conforming, Non-QM / DSCR, Private Money / Hard Money. Plus an "All loan types" option.
+4. **Live query** — Reads directly from `lofi_guidelines`; results refresh instantly on type/toggle. Picks up cron-updated rows on load/refetch.
+5. **Guideline cards** — Each row shows `rule_name`, a `category` pill, `guideline_text`, and a subtle tiny footer: `Source Track Checked: ID #[id]`.
+6. **Empty state** — Relaxed note: "No stips found... keep sipping your coffee."
 
-## Technical implementation
-- **AI backend**: ensure `LOVABLE_API_KEY` exists, add a server-only gateway helper `src/lib/ai-gateway.server.ts`, and a `createServerFn` (`src/lib/underwriting.functions.ts`) that takes `{ loanProgram, scenario }`, validates with Zod, and calls Lovable AI (`google/gemini-3-flash-preview`) using the schema's system instruction + report framework as the prompt. Returns `{ report: string }` markdown.
-- **Frontend**: `src/routes/index.tsx` — controlled `select` + `textarea`, a submit handler using `useServerFn` inside a `useMutation` (TanStack Query is already wired), loading/disabled states, and error handling for 429 (rate limit) / 402 (credits) surfaced as inline messages.
-- **Markdown rendering**: lightweight render of the returned markdown (add `react-markdown`, a small dependency) so the dashboard headers/tables/bullets display cleanly. A "Copy to clipboard" button on the report.
-- **Performance**: no heavy UI libraries; plain Tailwind, single component, no nested data maps. SEO head (title <60, description <160), single H1.
-- **No database** (no persistence requested). The 4 reference guidebook PDFs in the schema are source material the AI reasons about via its prompt knowledge; they are not uploaded files in this project, so the report is generated from the scenario + program against the model's guideline knowledge (matching the schema's prompt design).
+## Technical details
 
-## Files
-- `src/lib/ai-gateway.server.ts` (gateway provider helper)
-- `src/lib/underwriting.functions.ts` (`generateReport` server fn)
-- `src/routes/index.tsx` (full UI, replaces placeholder)
-- `package.json` (+ `ai`, `@ai-sdk/openai-compatible`, `react-markdown`)
+- **Supabase client**: add `@supabase/supabase-js`; create `src/integrations/supabase/client.ts` reading `import.meta.env.VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`. Secrets stored via the secrets tool (both `VITE_` client vars).
+- **Data fetch**: A `createServerFn` (`src/lib/guidelines.functions.ts`) using a server publishable client to `select id, loan_type, category, rule_name, guideline_text from lofi_guidelines`, fetched via TanStack Query in the route loader (`ensureQueryData`) + `useSuspenseQuery`. Search and loan-type filtering done client-side over the fetched rows for instant feedback (no per-keystroke round-trips). Route gets `errorComponent` + `notFoundComponent`.
+- **UI**: rewrite `src/routes/index.tsx` as the Study Corner (replacing the underwriting form), with the search input + select as controlled `useState`, and a memoized filtered list. Lightweight, no heavy libs.
+- **Cleanup**: the old underwriting report files (`underwriting.functions.ts`, `ai-gateway.server.ts`, related markdown styles) are left in place unless you want them removed.
 
-## Verification
-Invoke the server function with a sample scenario, confirm a structured report returns, then screenshot the preview to check layout and whitespace.
+Confirm and I'll connect Supabase and build it.  
+  
+ADDTIONAL NOTES:  
+  
+The plan looks absolutely flawless. Please go ahead and connect my existing Supabase project. 
+
+Regarding the Row-Level Security (RLS) question: Yes, please go ahead and route the reads through the public read policy (SELECT TO anon) since this is my own internal desktop processing toolkit. 
+
+I am ready to paste the Project URL and Publishable / anon public key as soon as you request them. Let's build the Cozy Guideline Study Corner!
