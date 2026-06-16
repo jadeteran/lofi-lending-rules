@@ -133,7 +133,7 @@ function Index() {
               </button>
             </div>
             <article className="report-md max-w-none text-sm leading-relaxed text-neutral-800">
-              <ReactMarkdown>{result.report}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.report}</ReactMarkdown>
             </article>
           </section>
         )}
