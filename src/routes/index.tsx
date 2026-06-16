@@ -10,13 +10,13 @@ import { generateReport, LOAN_PROGRAMS } from "@/lib/underwriting.functions";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "UnderwriterPro — Mortgage Underwriting Analysis" },
+      { title: "Lofi Lending — Mortgage Underwriting Analysis" },
       {
         name: "description",
         content:
           "Analyze complex mortgage underwriting scenarios against official government loan program guidelines.",
       },
-      { property: "og:title", content: "UnderwriterPro" },
+      { property: "og:title", content: "Lofi Lending" },
       {
         property: "og:description",
         content:
@@ -59,7 +59,7 @@ function Index() {
     <div className="min-h-screen bg-white text-neutral-900">
       <div className="mx-auto max-w-3xl px-6 py-16">
         <header className="mb-12">
-          <h1 className="text-3xl font-semibold tracking-tight">UnderwriterPro</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Lofi Lending</h1>
           <p className="mt-2 text-neutral-500">
             Analyze complex mortgage underwriting scenarios against official loan program
             guidelines.
