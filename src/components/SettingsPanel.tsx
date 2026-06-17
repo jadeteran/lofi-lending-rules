@@ -135,7 +135,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       const res = await uploadGuidelines({ data: { accessToken, files } });
       const supersedeNote =
         res.totalSuperseded > 0
-          ? ` Replaced ${res.totalSuperseded} older passage${res.totalSuperseded === 1 ? "" : "s"} — the new version now overrides any conflicting info.`
+          ? ` Overrode ${res.totalSuperseded} conflicting passage${res.totalSuperseded === 1 ? "" : "s"} — the rest of the handbook was left untouched.`
           : "";
       setUploadDone(
         `Added ${res.totalChunks} passage${res.totalChunks === 1 ? "" : "s"} from ${res.results.length} file${res.results.length === 1 ? "" : "s"}.${supersedeNote}`,
@@ -338,7 +338,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             </p>
           </button>
           <p className="mt-2 text-xs text-[var(--lofi-muted)]">
-            Re-uploading a file with the same name replaces its previous version, so newer guidance always overrides conflicting older info.
+            Uploads are merged into the handbook. New content only overrides the specific passages it conflicts with — the rest of the handbook stays in place, so agency updates won't wipe the whole guide.
           </p>
           {uploadDone && (
             <p className="mt-2 text-xs font-semibold text-[var(--lofi-blue-deep)]">{uploadDone}</p>
