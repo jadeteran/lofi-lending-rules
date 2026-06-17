@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { useAuth } from "@/components/AuthProvider";
 import workspaceAsset from "@/assets/lofi-workspace.png.asset.json";
+import headphoneBadge from "@/assets/anime-headphone-badge.png.asset.json";
 
 const FONT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 
@@ -53,10 +54,10 @@ export function LoginPage() {
         >
           <div className="mb-8 text-center">
             <img
-              src={workspaceAsset.url}
+              src={headphoneBadge.url}
               alt=""
               aria-hidden
-              className="mx-auto mb-1 h-12 w-12 rounded-full object-cover shadow-[var(--lofi-shadow)]"
+              className="mx-auto mb-1 h-14 w-14 object-contain drop-shadow-[var(--lofi-shadow)]"
             />
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--lofi-blue-deep)]">
               Welcome back
