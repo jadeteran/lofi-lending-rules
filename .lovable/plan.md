@@ -1,33 +1,27 @@
-## Goal
+# Restyle Login Page to Match 90s-Anime Home Theme
 
-Replace the current cropped earpiece icon with a freshly **generated** circular badge: a sharp, detailed 90s cel-shaded anime illustration of a **complete side profile of over-ear headphones**, with the word **"lofi"** kept horizontal, centered, and facing the viewer. The image is created and previewed before it's wired into the app.
+Re-skin the login page so its layout and art match the attached reference and the home page's grainy, 2D, cel-shaded 90s-anime look. The login form elements inside the card stay exactly as they are — only the surrounding stylization and layout change.
 
-## Step 1 — Generate the new icon (create, not crop)
+## 1. New full-bleed scene illustration
 
-Use `imagegen` (premium quality, transparent background) to produce a brand-new icon:
-- Circular badge composition, transparent PNG so it sits flush on the latte canvas.
-- A complete side-profile of over-ear headphones (full headband + ear cup), 90s cel-shaded anime style: bold ink outlines, flat cel shading, high contrast, saturated grainy texture.
-- "lofi" wordmark rendered perfectly horizontal and centered (not following the curve), facing the user, balanced within the circular frame.
-- Iced-latte palette (warm cream + deep blue accents) to match the existing theme.
-- Save to `src/assets/anime-headphone-badge.png`, then upload via `lovable-assets` and write the `.asset.json` pointer.
+Generate one wide background illustration matching the reference, rendered in the home page's stylization (flat 2D cel-shading, bold ink outlines, grainy texture, warm "iced latte" palette):
+- Left: the fluffy long-haired **black cat** (cute small fangs, slight smile) resting on the wooden window sill.
+- Right: the **girl with glasses + LOFI over-ear headphones**, side profile, scarf, trailing pothos/plants and desk lamp.
+- Center/back: window with calm clouds + soft sky and a warm interior, leaving open space in the middle for the floating login card.
+- Save `src/assets/lofi-login-scene.png`, upload via `lovable-assets`, write `.asset.json`.
 
-**Show the rendered result for approval before wiring it in.**
+## 2. Rework `src/components/LoginPage.tsx` layout
 
-## Step 2 — Wire the icon into small-scale app icons
+- Replace the asymmetric split-grid with a **single full-bleed background**: the new scene fills the screen (`object-cover`), with the login card floating centered over it (matching the reference composition).
+- Keep the frosted-glass card styling consistent with the home theme: `backdrop-blur-lg`, golden glowing border (`--lofi-glow-border`), `--lofi-card` background, existing shadow.
+- **Do not change anything inside the card**: keep the headphone badge, "Welcome back" heading/subtext, Email + Password fields, error state, and Sign in button exactly as-is.
+- Keep all auth logic (`useAuth`, `handleSubmit`) untouched.
+- Add a subtle scrim behind the card if needed for text contrast over the illustration; ensure mobile keeps the card readable and centered.
 
-Once approved, point these at the new asset:
-- **Home header logo** (`src/routes/index.tsx`, the `<img>` at ~line 337) — swap `earpieceIcon` → new badge, keep 96×96 / `object-contain`.
-- **Login page small badge** (`src/components/LoginPage.tsx`, ~line 55) — swap the small circular `workspaceAsset` thumbnail to the new badge for consistency (the large left-side illustration stays as-is).
+## 3. Verify
+- `browser--view_preview` on the login view (desktop + mobile): scene matches the reference, grainy 2D home stylization, card floats centered, form unchanged and readable.
 
-## Step 3 — Verify
-
-Confirm the icon renders crisp at small sizes (transparent edges, legible "lofi", clean circular framing) and matches the iced-latte theme.
-
-## Notes / scope
-
-- Frontend-only: image generation + `<img src>` swaps. No layout, copy, color-theme, or backend changes.
-- The "Previous Scenarios" / history toggle uses a Lucide `Clock` glyph (text button), not an image badge — left unchanged unless you'd prefer that button also adopt the new badge.
-
-### Technical details
-- New asset: `src/assets/anime-headphone-badge.png` + `.asset.json` pointer via `lovable-assets create`.
-- Old `anime-earpiece-icon.png.asset.json` can be removed once no longer referenced.
+## Notes
+- Frontend/presentation only; no backend or form changes.
+- Reference image used for layout/art direction only — not embedded directly.
+- Old `lofi-workspace.png` asset can be removed once the new scene is wired in.
