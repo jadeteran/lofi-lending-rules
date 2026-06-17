@@ -466,3 +466,89 @@ function DocumentationCard({ documentation }: { documentation: Documentation }) 
     </article>
   );
 }
+
+function statusStyle(status: AlternativeProgram["status"]) {
+  switch (status) {
+    case "Eligible":
+      return { bg: "var(--lofi-sage)", label: "✅ Eligible" };
+    case "Likely Eligible":
+      return { bg: "var(--lofi-blue)", label: "🟦 Likely Eligible" };
+    case "High Risk":
+      return { bg: "var(--lofi-peach)", label: "⚠️ High Risk" };
+    default:
+      return { bg: "var(--lofi-cream-deep)", label: "⛔ Ineligible" };
+  }
+}
+
+function AlternativesCard({ alternatives }: { alternatives: AlternativeProgram[] }) {
+  return (
+    <article className="flex flex-col rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+      <div className="mb-4 flex items-center gap-2">
+        <span
+          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          style={{ backgroundColor: "var(--lofi-lavender)" }}
+        >
+          🔀 Alternative Loan Programs
+        </span>
+      </div>
+      {alternatives.length === 0 ? (
+        <p className="text-sm leading-relaxed text-[var(--lofi-muted)]">
+          No alternative programs evaluated for this scenario yet.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {alternatives.map((a, i) => {
+            const s = statusStyle(a.status);
+            const risky = a.status === "High Risk" || a.status === "Ineligible";
+            return (
+              <div
+                key={`${a.program}-${i}`}
+                className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/60 p-4"
+              >
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-extrabold text-[var(--lofi-blue-deep)]">
+                    {a.program}
+                  </p>
+                  <span
+                    className="rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[var(--lofi-blue-deep)]"
+                    style={{ backgroundColor: s.bg }}
+                  >
+                    {s.label}
+                  </span>
+                </div>
+                <dl className="flex flex-col gap-1.5 text-sm">
+                  <div className="flex gap-2">
+                    <dt className="w-28 shrink-0 text-xs font-bold uppercase tracking-wider text-[var(--lofi-muted)]">
+                      LTV / CLTV
+                    </dt>
+                    <dd className="text-[var(--lofi-ink)]">{a.ltvCap}</dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt className="w-28 shrink-0 text-xs font-bold uppercase tracking-wider text-[var(--lofi-muted)]">
+                      Benefit
+                    </dt>
+                    <dd className="text-[var(--lofi-ink)]">{a.benefit}</dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt
+                      className="w-28 shrink-0 text-xs font-bold uppercase tracking-wider"
+                      style={{ color: risky ? "var(--lofi-blue-deep)" : "var(--lofi-muted)" }}
+                    >
+                      Risk Factor
+                    </dt>
+                    <dd
+                      className="whitespace-pre-line"
+                      style={{ color: risky ? "var(--lofi-blue-deep)" : "var(--lofi-ink)", fontWeight: risky ? 600 : 400 }}
+                    >
+                      {a.vulnerability}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </article>
+  );
+}
