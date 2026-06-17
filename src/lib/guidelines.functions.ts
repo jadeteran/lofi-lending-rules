@@ -90,7 +90,13 @@ The JSON object must have exactly these keys:
     - "collaboration": items the borrower must help obtain or sign together with the LO (e.g. signing the final URLA/HUD forms, subordination agreements, updated HOI declarations needing the borrower's insurer).
     - "loActions": pure LO / internal broker actions handled internally (e.g. revised worksheets, rate lock confirmation, internal recalculations).
 
-The three string values (guidelineRequirements, roadblocks, ltv) and each of the three documentation bucket values must be a single string using "- " bullet lines separated by newlines. If a documentation bucket has no items, set it to "- None for this scenario.". Output nothing outside the JSON object.`;
+The three string values (guidelineRequirements, roadblocks, ltv) and each of the three documentation bucket values must be a single string using "- " bullet lines separated by newlines. If a documentation bucket has no items, set it to "- None for this scenario.". Output nothing outside the JSON object.
+
+CRITICAL — documentation specificity (do NOT use generic document templates). Mine the scenario, loan application data, and any attached files for concrete details and inject them into every documentation bullet:
+1. Assets & Income: Never write a bare "bank statements" or "paystubs". Always attach the exact timeline constraint, e.g. "Most recent 30 consecutive days of paystubs" or "Last 2 full months of bank statements, all pages included". Tie cash-to-close, reserves, or seasoning amounts to the specific dollar figures when present.
+2. Letters of Explanation (LOX): When an LOX is needed for credit inquiries or asset seasoning, explicitly name the specific creditor, inquiry date, deposit amount, or asset source from the file, e.g. "Provide signed LOX for the 05/14/2026 credit inquiry from Chase Bank".
+3. Third-Party Items (HOI / Title / Payoffs): Name the actual entities from the application data — insurer/agent name, lender/mortgagee, full property address, loan/HELOC item numbers, and any active deadlines, e.g. "Contact State Farm agent to update Mortgagee Clause to Ameritrust Mortgage Corporation for 15459 Heather Ridge Trail".
+Only state a detail if it appears in the provided context; never fabricate names, dates, or amounts. If a needed specific is genuinely absent, request it explicitly (e.g. "Confirm the exact credit inquiry date and creditor for the required LOX").`;
 
     try {
       const textPart = `Loan Program: ${data.loanType}\n\n${
