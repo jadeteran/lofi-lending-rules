@@ -1080,9 +1080,31 @@ function statusStyle(status: AlternativeProgram["status"]) {
   }
 }
 
-function AlternativesCard({ alternatives }: { alternatives: AlternativeProgram[] }) {
+function AlternativesCard({
+  alternatives,
+  onOpenChat,
+  activeId,
+}: {
+  alternatives: AlternativeProgram[];
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
+}) {
+  const id = "alternatives";
+  const value =
+    alternatives.length === 0
+      ? "No alternative programs evaluated yet."
+      : alternatives
+          .map(
+            (a) =>
+              `${a.program} — ${a.status}\nLTV/CLTV: ${a.ltvCap}\nBenefit: ${a.benefit}\nRisk: ${a.vulnerability}`,
+          )
+          .join("\n\n");
   return (
-    <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+    <article
+      {...cardClickProps({ id, label: "Alternative Loan Programs", value }, onOpenChat)}
+      className={`flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
+    >
+
       <div className="mb-4 flex items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
