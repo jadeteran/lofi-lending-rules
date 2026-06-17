@@ -75,6 +75,15 @@ const AlternativeProgramSchema = z.object({
   vulnerability: z.string().default(""),
 });
 
+const FileProfileSchema = z.object({
+  summaryTitle: z.string().default(""),
+  creditScore: z.string().default(""),
+  dti: z.string().default(""),
+  ltv: z.string().default(""),
+  propertyState: z.string().default(""),
+  profileGroup: z.string().default(""),
+});
+
 const PreviousReportSchema = z.object({
   guidelineRequirements: z.string().default(""),
   roadblocks: z.string().default(""),
@@ -88,6 +97,7 @@ const PreviousReportSchema = z.object({
   citations: z.string().default(""),
   recommendedProgram: z.string().default(""),
   recommendation: z.string().default(""),
+  fileProfile: FileProfileSchema.optional(),
 });
 
 const InputSchema = z
