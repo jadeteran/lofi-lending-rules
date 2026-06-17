@@ -159,8 +159,23 @@ function StudyCorner() {
       },
     ]);
     setSelected(0);
+    setLastProgram(item.selectedProgram);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  function clearSlate() {
+    nextId.current = 1;
+    setScenario("");
+    setAttachments([]);
+    setLoanType("");
+    setVersions([]);
+    setSelected(0);
+    setLastProgram(null);
+    mutation.reset();
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+
 
 
   const canSubmit =
