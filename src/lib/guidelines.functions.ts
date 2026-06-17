@@ -95,13 +95,52 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const isOverride = data.mode === "override" && !!data.previousReport;
 
-    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, and documentation. Do not wrap the response in markdown code blocks like \`\`\`json.
+    // ---- Hybrid grounding: curated locked rules (#3) + handbook RAG (#1) ----
+    const groundingQuery = `${data.loanType}\n\n${data.scenario.trim()}`.trim();
+    const { buildGroundingContext } = await import("@/lib/guidelines.server");
+    const grounding = await buildGroundingContext(groundingQuery, key);
+
+    const lockedRulesBlock = grounding.lockedRules.length
+      ? grounding.lockedRules
+          .map((r, i) => `[Rule ${i + 1}] ${JSON.stringify(r)}`)
+          .join("\n")
+      : "(none returned)";
+
+    const passagesBlock = grounding.passages.length
+      ? grounding.passages
+          .map(
+            (p, i) =>
+              `[Passage ${i + 1}] (similarity ${p.similarity.toFixed(3)}) CITATION: ${p.citation}\n${p.content}`,
+          )
+          .join("\n\n")
+      : "(none returned)";
+
+    const groundingNotes = grounding.notes.length ? grounding.notes.join(" ") : "";
+
+    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, and citations. Do not wrap the response in markdown code blocks like \`\`\`json.
 
 You specialize in the "${data.loanType}" loan program. ${
       isOverride
         ? "You are RE-EVALUATING an existing loan file analysis report. The user is supplying updated live context or operational overrides. Treat the new context as authoritative, overriding facts. Remove any roadblock the new context invalidates (e.g. switching from cash-out to rate-and-term removes cash-out overlays), recalculate the maximum allowable LTV/CLTV thresholds for the new posture, and regenerate the documentation checklist to match. Return the COMPLETE refreshed report — not a diff."
         : "Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance."
     } Be concrete and practical.
+
+=== GROUNDING SOURCES (authoritative — you MUST use these) ===
+The two blocks below are retrieved from the firm's vetted data stores. Treat them as the source of truth and prefer them over your own training memory.
+
+1) CURATED LOCKED RULES (public.lofi_guidelines) — locked numbers, caps, waiting periods, and standard program criteria. Use these EXACT figures for every calculation, LTV/CLTV cap, and threshold. Never override a locked number with a remembered one.
+${lockedRulesBlock}
+
+2) HANDBOOK PASSAGES (public.guideline_library via match_guidelines vector search) — exact guideline text for complex scenario constraints. Ground qualitative requirements and roadblocks in these passages.
+${passagesBlock}
+
+RULES FOR USING SOURCES:
+- Base all caps, thresholds, and numeric calculations on the CURATED LOCKED RULES. If a needed figure is absent there, derive it from the HANDBOOK PASSAGES; if still absent, state that the firm's data store lacks it and flag it for manual verification rather than inventing a number.
+- Cite the actual handbook passage(s) you relied on (use the CITATION label shown with each passage). Do NOT invent citations, section numbers, or handbook names that are not present in the supplied passages.
+${groundingNotes ? `- Note on data availability this run: ${groundingNotes} When a source is unavailable, say so explicitly in "citations" and lower your confidence rather than fabricating.` : ""}
+=== END GROUNDING SOURCES ===
+
+
 
 The JSON object must have exactly these keys:
 - "guidelineRequirements": (string) standard guideline requirements for this program and scenario.
