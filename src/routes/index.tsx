@@ -162,7 +162,10 @@ function StudyCorner() {
     <Shell>
       <header className="mb-10 text-center">
         <p className="text-3xl">🎧</p>
-        <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl">
+        <h1
+          className="mt-2 text-4xl font-bold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl"
+          style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
+        >
           AI Guideline Assistant
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-[var(--lofi-muted)]">
