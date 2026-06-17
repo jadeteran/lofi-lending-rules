@@ -93,7 +93,7 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const isOverride = data.mode === "override" && !!data.previousReport;
 
-    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, and documentation. Do not wrap the response in markdown code blocks like \`\`\`json.
+    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, and documentation. Do not wrap the response in markdown code blocks like \`\`\`json.
 
 You specialize in the "${data.loanType}" loan program. ${
       isOverride
