@@ -307,12 +307,11 @@ function StudyCorner() {
 
   const reportContext: ReportContext = {
     loanType,
-    scenario: current?.report
-      ? `${shortLabel(scenario)}`.trim()
-      : scenario,
+    scenario,
     versionLabel: current ? (current.isBase ? "Base analysis" : current.label) : "",
     report: (current?.report ?? {}) as unknown as Record<string, unknown>,
   };
+
 
 
 
