@@ -110,7 +110,7 @@ function StudyCorner() {
   const [versions, setVersions] = useState<Version[]>([]);
   const [selected, setSelected] = useState(0);
   const [showTimeline, setShowTimeline] = useState(true);
-  const [showHistory, setShowHistory] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [lastProgram, setLastProgram] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
