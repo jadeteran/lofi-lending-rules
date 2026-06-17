@@ -299,6 +299,23 @@ function StudyCorner() {
   const current = versions[selected];
   const isLatest = selected === versions.length - 1;
 
+  // Close the card assistant when the viewed version changes so its context
+  // never goes stale against a different report.
+  useEffect(() => {
+    setActiveCard(null);
+  }, [selected]);
+
+  const reportContext: ReportContext = {
+    loanType,
+    scenario: current?.report
+      ? `${shortLabel(scenario)}`.trim()
+      : scenario,
+    versionLabel: current ? (current.isBase ? "Base analysis" : current.label) : "",
+    report: (current?.report ?? {}) as unknown as Record<string, unknown>,
+  };
+
+
+
   return (
     <Shell>
       <div className="mb-2 flex items-center justify-between gap-2">
