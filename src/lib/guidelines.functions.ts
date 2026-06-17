@@ -34,6 +34,15 @@ export type AlternativeProgram = {
   vulnerability: string;
 };
 
+export type FileProfile = {
+  summaryTitle: string;
+  creditScore: string;
+  dti: string;
+  ltv: string;
+  propertyState: string;
+  profileGroup: string;
+};
+
 export type Analysis = {
   guidelineRequirements: string;
   roadblocks: string;
@@ -43,6 +52,7 @@ export type Analysis = {
   citations: string;
   recommendedProgram: string;
   recommendation: string;
+  fileProfile: FileProfile;
 };
 
 const AttachmentSchema = z.object({
