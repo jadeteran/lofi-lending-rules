@@ -55,20 +55,35 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const gateway = createLovableAiGatewayProvider(key);
 
-    const system = `You are a senior mortgage underwriting assistant. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, and documentation. Do not wrap the response in markdown code blocks like \`\`\`json.
+    const isOverride = data.mode === "override" && !!data.previousReport;
 
-You specialize in the "${data.loanType}" loan program. Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance. Be concrete and practical.
+    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, and documentation. Do not wrap the response in markdown code blocks like \`\`\`json.
+
+You specialize in the "${data.loanType}" loan program. ${
+      isOverride
+        ? "You are RE-EVALUATING an existing loan file analysis report. The user is supplying updated live context or operational overrides. Treat the new context as authoritative, overriding facts. Remove any roadblock the new context invalidates (e.g. switching from cash-out to rate-and-term removes cash-out overlays), recalculate the maximum allowable LTV/CLTV thresholds for the new posture, and regenerate the documentation checklist to match. Return the COMPLETE refreshed report — not a diff."
+        : "Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance."
+    } Be concrete and practical.
 
 The JSON object must have exactly these string keys:
 - "guidelineRequirements": standard guideline requirements for this program and scenario.
 - "roadblocks": potential roadblocks, red flags, or reasons this could get denied.
+- "ltv": maximum allowable LTV / CLTV thresholds and an eligibility read for this exact scenario.
 - "documentation": exact documentation to request from the borrower to clear this.
 
 Each value must be a single string using "- " bullet lines separated by newlines. Output nothing outside the JSON object.`;
 
     try {
-      const textPart = `Loan Program: ${data.loanType}\n\nScenario / Stipulation:\n${
-        data.scenario.trim() || "(See attached file(s) — extract the relevant stipulation or scenario details from them.)"
+      const textPart = `Loan Program: ${data.loanType}\n\n${
+        isOverride
+          ? `PREVIOUS REPORT (to re-evaluate):\n${JSON.stringify(data.previousReport, null, 2)}\n\nUPDATED CONTEXT / OPERATIONAL OVERRIDE (authoritative):\n${
+              data.scenario.trim() ||
+              "(See attached file(s) — extract the override details from them.)"
+            }`
+          : `Scenario / Stipulation:\n${
+              data.scenario.trim() ||
+              "(See attached file(s) — extract the relevant stipulation or scenario details from them.)"
+            }`
       }`;
 
       const content: Array<
@@ -99,6 +114,7 @@ Each value must be a single string using "- " bullet lines separated by newlines
       return {
         guidelineRequirements: parsed.guidelineRequirements ?? "No requirements returned.",
         roadblocks: parsed.roadblocks ?? "No roadblocks returned.",
+        ltv: parsed.ltv ?? "No LTV thresholds returned.",
         documentation: parsed.documentation ?? "No documentation returned.",
       };
     } catch (err) {
