@@ -8,6 +8,7 @@ import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.f
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import workspaceAsset from "@/assets/lofi-workspace.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
