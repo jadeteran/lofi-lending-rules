@@ -394,7 +394,7 @@ function StudyCorner() {
                   />
                 ) : (
                   <div className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-1 text-center shadow-[var(--lofi-shadow)]">
-                    <span className="text-2xl">📄</span>
+                    <FileText size={22} className="text-[var(--lofi-blue-deep)]" />
                     <span className="w-full truncate text-[10px] font-semibold text-[var(--lofi-muted)]">
                       {att.name}
                     </span>
@@ -404,9 +404,9 @@ function StudyCorner() {
                   type="button"
                   onClick={() => removeAttachment(i)}
                   aria-label="Remove attachment"
-                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lofi-blue-deep)] text-xs font-bold text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)]"
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lofi-blue-deep)] text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)]"
                 >
-                  ✕
+                  <X size={14} />
                 </button>
               </div>
             ))}
@@ -429,9 +429,9 @@ function StudyCorner() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-5 py-3 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+            className="flex items-center gap-2 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-5 py-3 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
           >
-            📎 Upload JPEG, PNG, or PDF
+            <Paperclip size={16} /> Upload JPEG, PNG, or PDF
           </button>
           <span className="text-xs text-[var(--lofi-muted)]">
             Paste images/text or upload JPEG, PNG, PDF · up to 6 files
@@ -442,9 +442,9 @@ function StudyCorner() {
               <button
                 type="button"
                 onClick={clearSlate}
-                className="rounded-xl border border-[var(--lofi-cream)]/30 bg-[var(--lofi-cream)]/5 px-5 py-3.5 text-sm font-semibold text-[var(--lofi-cream)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-[var(--lofi-cream)]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lofi-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                className="flex items-center gap-2 rounded-xl border border-[var(--lofi-blue-deep)]/30 bg-[var(--lofi-card)] px-5 py-3.5 text-sm font-semibold text-[var(--lofi-blue-deep)] backdrop-blur-md transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lofi-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
               >
-                ✨ Clear Slate
+                <Sparkles size={16} /> Clear Slate
               </button>
             )}
 
@@ -473,8 +473,8 @@ function StudyCorner() {
             savedFlash ? "opacity-100" : "opacity-0"
           }`}
         >
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--lofi-blue)] text-[10px] text-[var(--lofi-blue-deep)]">
-            ✓
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--lofi-blue)] text-[var(--lofi-blue-deep)]">
+            <Check size={10} />
           </span>
           All changes saved to history
         </span>
