@@ -101,6 +101,7 @@ export const analyzeScenario = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(key);
 
     const isOverride = data.mode === "override" && !!data.previousReport;
+    const isProgramFinder = data.loanType === PROGRAM_FINDER;
 
     // ---- Hybrid grounding: curated locked rules (#3) + handbook RAG (#1) ----
     const groundingQuery = `${data.loanType}\n\n${data.scenario.trim()}`.trim();
