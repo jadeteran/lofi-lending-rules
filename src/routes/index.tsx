@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-import { analyzeScenario, LOAN_TYPES } from "@/lib/guidelines.functions";
+import { analyzeScenario, LOAN_TYPES, type Analysis } from "@/lib/guidelines.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -12,13 +12,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "A calm AI study corner for loan officers. Drop in a tough stip or loan scenario and get instant guideline requirements, roadblocks, and the docs to request.",
+          "A calm AI study corner for loan officers. Drop in a tough stip or loan scenario and get instant guideline requirements, roadblocks, LTV thresholds, and the docs to request.",
       },
       { property: "og:title", content: "AI Guideline Assistant" },
       {
         property: "og:description",
         content:
-          "Analyze loan scenarios instantly with an AI underwriting assistant in a relaxed lofi study space.",
+          "Analyze and re-evaluate loan scenarios with an AI underwriting assistant — version every override in a relaxed lofi study space.",
       },
     ],
   }),
@@ -36,25 +36,72 @@ function Shell({ children }: { children: React.ReactNode }) {
         color: "var(--lofi-ink)",
       }}
     >
-      <div className="mx-auto max-w-5xl px-6 py-16 sm:px-10 sm:py-20">{children}</div>
+      <div className="mx-auto max-w-6xl px-6 py-16 sm:px-10 sm:py-20">{children}</div>
     </div>
   );
 }
 
 type Attachment = { name: string; mediaType: string; dataUrl: string };
 
+type Version = {
+  id: number;
+  label: string;
+  createdAt: number;
+  report: Analysis;
+  isBase: boolean;
+};
+
 const ACCEPTED = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+
+function shortLabel(text: string) {
+  const clean = text.trim().replace(/\s+/g, " ");
+  if (!clean) return "Context update";
+  return clean.length > 48 ? `${clean.slice(0, 48)}…` : clean;
+}
+
+function timeOf(ts: number) {
+  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
 
 function StudyCorner() {
   const analyze = useServerFn(analyzeScenario);
   const [loanType, setLoanType] = useState("");
   const [scenario, setScenario] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [versions, setVersions] = useState<Version[]>([]);
+  const [selected, setSelected] = useState(0);
+  const [showTimeline, setShowTimeline] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nextId = useRef(1);
+
+  const hasVersions = versions.length > 0;
 
   const mutation = useMutation({
-    mutationFn: (vars: { loanType: string; scenario: string; attachments: Attachment[] }) =>
-      analyze({ data: vars }),
+    mutationFn: (vars: {
+      loanType: string;
+      scenario: string;
+      attachments: Attachment[];
+      mode: "initial" | "override";
+      previousReport?: Analysis;
+    }) => analyze({ data: vars }),
+    onSuccess: (report, vars) => {
+      setVersions((prev) => {
+        const id = nextId.current++;
+        const isBase = prev.length === 0;
+        const next: Version = {
+          id,
+          label: isBase ? "Base analysis" : shortLabel(vars.scenario),
+          createdAt: Date.now(),
+          report,
+          isBase,
+        };
+        const updated = [...prev, next];
+        setSelected(updated.length - 1);
+        return updated;
+      });
+      setScenario("");
+      setAttachments([]);
+    },
   });
 
   const canSubmit =
@@ -98,10 +145,18 @@ function StudyCorner() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
-    mutation.mutate({ loanType, scenario: scenario.trim(), attachments });
+    const mode: "initial" | "override" = hasVersions ? "override" : "initial";
+    mutation.mutate({
+      loanType,
+      scenario: scenario.trim(),
+      attachments,
+      mode,
+      previousReport: hasVersions ? versions[versions.length - 1].report : undefined,
+    });
   }
 
-  const result = mutation.data;
+  const current = versions[selected];
+  const isLatest = selected === versions.length - 1;
 
   return (
     <Shell>
@@ -111,9 +166,9 @@ function StudyCorner() {
           AI Guideline Assistant
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-[var(--lofi-muted)]">
-          Queue the lofi beats, pick a loan program, and drop in a real-world scenario
-          or a tough underwriter stip. The assistant maps the guideline requirements,
-          roadblocks, and exactly what to request from your borrower.
+          Pick a loan program and drop in a scenario for the base read. Then feed
+          live context or operational overrides — the assistant re-evaluates the file,
+          drops stale roadblocks, recalculates LTV, and versions every pass.
         </p>
       </header>
 
@@ -136,7 +191,11 @@ function StudyCorner() {
           onChange={(e) => setScenario(e.target.value)}
           onPaste={handlePaste}
           rows={5}
-          placeholder="Paste or type a tough stip, describe the loan scenario, or paste/upload a screenshot… e.g. 'Borrower is self-employed with declining income year over year and underwriter wants P&L support.'"
+          placeholder={
+            hasVersions
+              ? "Add updated context or an operational override… e.g. 'Borrower switched from cash-out to rate-and-term; appraisal came in at $640k.'"
+              : "Paste or type a tough stip, describe the loan scenario, or paste/upload a screenshot… e.g. 'Borrower is self-employed with declining income year over year and underwriter wants P&L support.'"
+          }
           className="w-full resize-y rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold leading-relaxed text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)] placeholder:font-normal placeholder:text-[var(--lofi-muted)]"
         />
 
@@ -195,20 +254,24 @@ function StudyCorner() {
             Paste images/text or upload JPEG, PNG, PDF · up to 6 files
           </span>
 
-
           <button
             type="submit"
             disabled={!canSubmit}
             className="rounded-2xl bg-[var(--lofi-blue-deep)] px-7 py-3.5 text-sm font-extrabold text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
-            {mutation.isPending ? "Analyzing the track…" : "Analyze scenario"}
+            {mutation.isPending
+              ? hasVersions
+                ? "Re-evaluating…"
+                : "Analyzing the track…"
+              : hasVersions
+                ? "Update report"
+                : "Analyze scenario"}
           </button>
         </div>
       </form>
 
-
-      {mutation.isError ? (
-        <div className="rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-10 text-center shadow-[var(--lofi-shadow)]">
+      {mutation.isError && (
+        <div className="mb-6 rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
           <p className="text-lg font-bold text-[var(--lofi-blue-deep)]">
             The record skipped a beat 🎧
           </p>
@@ -216,19 +279,114 @@ function StudyCorner() {
             {(mutation.error as Error).message}
           </p>
         </div>
-      ) : result ? (
-        <div className="grid grid-cols-1 gap-6">
-          <ResultCard title="Guideline Requirements" emoji="📋" text={result.guidelineRequirements} accent="lavender" />
-          <ResultCard title="Potential Roadblocks" emoji="🚧" text={result.roadblocks} accent="peach" />
-          <ResultCard title="Documentation to Request" emoji="📂" text={result.documentation} accent="sage" />
+      )}
+
+      {current ? (
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <section className="min-w-0 flex-1">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-extrabold text-[var(--lofi-blue-deep)]">
+                  Clean Report View
+                </h2>
+                <p className="text-xs text-[var(--lofi-muted)]">
+                  {current.isBase ? "Base analysis" : current.label} ·{" "}
+                  {timeOf(current.createdAt)}
+                  {!isLatest && " · viewing older version (read-only)"}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {versions.map((v, i) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setSelected(i)}
+                    className={`rounded-full px-3.5 py-1.5 text-xs font-bold shadow-[var(--lofi-shadow)] transition ${
+                      i === selected
+                        ? "bg-[var(--lofi-blue-deep)] text-[var(--lofi-cream)]"
+                        : "border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-[var(--lofi-blue-deep)] hover:-translate-y-0.5"
+                    }`}
+                  >
+                    v{i + 1}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setShowTimeline((s) => !s)}
+                  className="rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-3.5 py-1.5 text-xs font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 lg:hidden"
+                >
+                  {showTimeline ? "Hide timeline" : "Show timeline"}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              <ResultCard title="Guideline Requirements" emoji="📋" text={current.report.guidelineRequirements} accent="lavender" />
+              <ResultCard title="Potential Roadblocks" emoji="🚧" text={current.report.roadblocks} accent="peach" />
+              <ResultCard title="LTV / Eligibility" emoji="📊" text={current.report.ltv} accent="blue" />
+              <ResultCard title="Documentation to Request" emoji="📂" text={current.report.documentation} accent="sage" />
+            </div>
+          </section>
+
+          {showTimeline && (
+            <aside className="lg:w-72 lg:shrink-0">
+              <div className="rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-5 shadow-[var(--lofi-shadow)] lg:sticky lg:top-8">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+                    Event Timeline
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowTimeline(false)}
+                    aria-label="Collapse timeline"
+                    className="hidden text-xs font-bold text-[var(--lofi-muted)] hover:text-[var(--lofi-blue-deep)] lg:block"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <ol className="flex flex-col gap-4">
+                  {versions.map((v, i) => (
+                    <li key={v.id} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <span
+                          className={`mt-0.5 h-2.5 w-2.5 rounded-full ${
+                            i === selected
+                              ? "bg-[var(--lofi-blue-deep)]"
+                              : "bg-[var(--lofi-cream-deep)]"
+                          }`}
+                        />
+                        {i < versions.length - 1 && (
+                          <span className="mt-1 w-px flex-1 bg-[var(--lofi-cream-deep)]" />
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelected(i)}
+                        className="-mt-1 flex-1 text-left"
+                      >
+                        <p className="text-xs font-bold text-[var(--lofi-blue-deep)]">
+                          v{i + 1} · {v.isBase ? "created" : "override applied"}
+                        </p>
+                        <p className="text-[11px] text-[var(--lofi-muted)]">
+                          {timeOf(v.createdAt)} · {v.isBase ? "base" : v.label}
+                        </p>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </aside>
+          )}
         </div>
       ) : (
-        <div className="rounded-3xl border border-dashed border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/70 px-8 py-16 text-center">
-          <p className="text-3xl">☕</p>
-          <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
-            Queue the beats and drop a scenario to analyze…
-          </p>
-        </div>
+        !mutation.isError && (
+          <div className="rounded-3xl border border-dashed border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/70 px-8 py-16 text-center">
+            <p className="text-3xl">☕</p>
+            <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
+              Queue the beats and drop a scenario to analyze…
+            </p>
+          </div>
+        )
       )}
 
       <footer className="mt-14 text-center text-xs text-[var(--lofi-muted)]">
@@ -247,14 +405,16 @@ function ResultCard({
   title: string;
   emoji: string;
   text: string;
-  accent: "lavender" | "peach" | "sage";
+  accent: "lavender" | "peach" | "sage" | "blue";
 }) {
   const accentVar =
     accent === "lavender"
       ? "var(--lofi-lavender)"
       : accent === "peach"
         ? "var(--lofi-peach)"
-        : "var(--lofi-sage)";
+        : accent === "blue"
+          ? "var(--lofi-blue)"
+          : "var(--lofi-sage)";
 
   return (
     <article className="flex flex-col rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
