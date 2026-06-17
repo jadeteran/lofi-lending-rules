@@ -976,10 +976,10 @@ function AlternativesCard({ alternatives }: { alternatives: AlternativeProgram[]
     <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
       <div className="mb-4 flex items-center gap-2">
         <span
-          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
           style={{ backgroundColor: "var(--lofi-lavender)" }}
         >
-          🔀 Alternative Loan Programs
+          <Shuffle size={14} /> Alternative Loan Programs
         </span>
       </div>
       {alternatives.length === 0 ? (
@@ -1001,10 +1001,10 @@ function AlternativesCard({ alternatives }: { alternatives: AlternativeProgram[]
                     {a.program}
                   </p>
                   <span
-                    className="rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[var(--lofi-blue-deep)]"
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[var(--lofi-blue-deep)]"
                     style={{ backgroundColor: s.bg }}
                   >
-                    {s.label}
+                    <s.icon size={12} /> {s.label}
                   </span>
                 </div>
                 <dl className="flex flex-col gap-1.5 text-sm">
