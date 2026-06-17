@@ -14,6 +14,12 @@ export type HistoryItem = {
   selectedProgram: string;
   analysis: Analysis;
   updatedAt: string;
+  summaryTitle: string;
+  creditScore: string;
+  dti: string;
+  ltv: string;
+  propertyState: string;
+  profileGroup: string;
 };
 
 /**
