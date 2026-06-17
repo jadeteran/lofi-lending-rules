@@ -2,12 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import {
+  Clock, Settings, LogOut, Paperclip, Sparkles, Check, X, ArrowRight,
+  FileText, Diamond, ClipboardList, Construction, BarChart3, BookOpen,
+  Compass, Shuffle, FolderOpen, Briefcase, Hand, Handshake, Headphones,
+  CheckCircle2, Circle, AlertTriangle, Ban, type LucideIcon,
+} from "lucide-react";
 
 import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import heroHeadphones from "@/assets/anime-headphones-hero.jpg.asset.json";
+import coffeeAccent from "@/assets/anime-coffee-accent.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,13 +53,13 @@ function AuthGate() {
       <div
         className="flex min-h-screen items-center justify-center"
         style={{
-          background:
-            "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
+          background: "var(--lofi-bg-1)",
           color: "var(--lofi-muted)",
-  
         }}
       >
-        <p className="animate-pulse text-sm">🎧 Tuning in…</p>
+        <p className="flex animate-pulse items-center gap-2 text-sm">
+          <Headphones size={16} /> Tuning in…
+        </p>
       </div>
     );
   }
@@ -63,15 +71,26 @@ function AuthGate() {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="min-h-screen"
+      className="relative min-h-screen"
       style={{
-
-        background:
-          "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
+        backgroundColor: "var(--lofi-bg-1)",
         color: "var(--lofi-ink)",
       }}
     >
-      <div className="mx-auto max-w-5xl px-6 py-16 sm:px-10 sm:py-20">{children}</div>
+      {/* Single massive standalone anime hero — no tiling, no patterns */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundColor: "var(--lofi-bg-1)",
+          backgroundImage: `url(${heroHeadphones.url})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center 22%",
+          backgroundSize: "min(90vw, 820px)",
+          opacity: 0.14,
+        }}
+      />
+      <div className="relative z-10 mx-auto max-w-5xl px-6 py-16 sm:px-10 sm:py-20">{children}</div>
     </div>
   );
 }
@@ -279,7 +298,7 @@ function StudyCorner() {
           title="Previous Scenarios"
           className="flex h-10 items-center justify-center gap-2 rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
         >
-          🕑 Previous Scenarios
+          <Clock size={16} /> Previous Scenarios
           {(historyQuery.data?.length ?? 0) > 0 && (
             <span className="rounded-full bg-[var(--lofi-blue)] px-2 py-0.5 text-[10px] text-[var(--lofi-blue-deep)]">
               {historyQuery.data?.length}
@@ -295,7 +314,7 @@ function StudyCorner() {
               title="Settings"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-lg shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
             >
-              ⚙️
+              <Settings size={18} />
             </button>
           )}
           <button
@@ -305,7 +324,7 @@ function StudyCorner() {
             title="Sign out"
             className="flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
           >
-            ⏏ Sign out
+            <LogOut size={16} /> Sign out
           </button>
         </div>
       </div>
@@ -313,7 +332,13 @@ function StudyCorner() {
         <SettingsPanel onClose={() => setShowSettings(false)} />
       )}
       <header className="mb-10 text-center">
-        <p className="text-3xl">🎧</p>
+        <img
+          src={heroHeadphones.url}
+          alt="90s anime LOFI headphones"
+          width={96}
+          height={96}
+          className="mx-auto h-24 w-24 object-contain drop-shadow-[0_8px_20px_oklch(0.4_0.08_56_/_0.35)]"
+        />
 
         <h1
           className="mt-2 text-4xl font-bold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl"
@@ -369,7 +394,7 @@ function StudyCorner() {
                   />
                 ) : (
                   <div className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-1 text-center shadow-[var(--lofi-shadow)]">
-                    <span className="text-2xl">📄</span>
+                    <FileText size={22} className="text-[var(--lofi-blue-deep)]" />
                     <span className="w-full truncate text-[10px] font-semibold text-[var(--lofi-muted)]">
                       {att.name}
                     </span>
@@ -379,9 +404,9 @@ function StudyCorner() {
                   type="button"
                   onClick={() => removeAttachment(i)}
                   aria-label="Remove attachment"
-                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lofi-blue-deep)] text-xs font-bold text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)]"
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lofi-blue-deep)] text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)]"
                 >
-                  ✕
+                  <X size={14} />
                 </button>
               </div>
             ))}
@@ -404,9 +429,9 @@ function StudyCorner() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-5 py-3 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+            className="flex items-center gap-2 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-5 py-3 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
           >
-            📎 Upload JPEG, PNG, or PDF
+            <Paperclip size={16} /> Upload JPEG, PNG, or PDF
           </button>
           <span className="text-xs text-[var(--lofi-muted)]">
             Paste images/text or upload JPEG, PNG, PDF · up to 6 files
@@ -417,9 +442,9 @@ function StudyCorner() {
               <button
                 type="button"
                 onClick={clearSlate}
-                className="rounded-xl border border-[var(--lofi-cream)]/30 bg-[var(--lofi-cream)]/5 px-5 py-3.5 text-sm font-semibold text-[var(--lofi-cream)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-[var(--lofi-cream)]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lofi-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                className="flex items-center gap-2 rounded-xl border border-[var(--lofi-blue-deep)]/30 bg-[var(--lofi-card)] px-5 py-3.5 text-sm font-semibold text-[var(--lofi-blue-deep)] backdrop-blur-md transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lofi-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
               >
-                ✨ Clear Slate
+                <Sparkles size={16} /> Clear Slate
               </button>
             )}
 
@@ -448,8 +473,8 @@ function StudyCorner() {
             savedFlash ? "opacity-100" : "opacity-0"
           }`}
         >
-          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--lofi-blue)] text-[10px] text-[var(--lofi-blue-deep)]">
-            ✓
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--lofi-blue)] text-[var(--lofi-blue-deep)]">
+            <Check size={10} />
           </span>
           All changes saved to history
         </span>
@@ -466,8 +491,8 @@ function StudyCorner() {
 
       {mutation.isError && (
         <div className="mb-6 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
-          <p className="text-lg font-bold text-[var(--lofi-blue-deep)]">
-            The record skipped a beat 🎧
+          <p className="flex items-center justify-center gap-2 text-lg font-bold text-[var(--lofi-blue-deep)]">
+            The record skipped a beat <Headphones size={18} />
           </p>
           <p className="mt-2 text-sm text-[var(--lofi-muted)]">
             {(mutation.error as Error).message}
@@ -523,12 +548,12 @@ function StudyCorner() {
                     recommendation={current.report.recommendation}
                   />
                 )}
-              <ResultCard title="Guideline Requirements" emoji="📋" text={current.report.guidelineRequirements} accent="lavender" />
-              <ResultCard title="Potential Roadblocks" emoji="🚧" text={current.report.roadblocks} accent="peach" />
-              <ResultCard title="LTV / Eligibility" emoji="📊" text={current.report.ltv} accent="blue" />
+              <ResultCard title="Guideline Requirements" icon={ClipboardList} text={current.report.guidelineRequirements} accent="lavender" />
+              <ResultCard title="Potential Roadblocks" icon={Construction} text={current.report.roadblocks} accent="peach" />
+              <ResultCard title="LTV / Eligibility" icon={BarChart3} text={current.report.ltv} accent="blue" />
               <AlternativesCard alternatives={current.report.alternatives} />
               <DocumentationCard documentation={current.report.documentation} />
-              <ResultCard title="Handbook Citations & Sources" emoji="📚" text={current.report.citations} accent="sage" />
+              <ResultCard title="Handbook Citations & Sources" icon={BookOpen} text={current.report.citations} accent="sage" />
             </div>
           </section>
 
@@ -543,9 +568,9 @@ function StudyCorner() {
                     type="button"
                     onClick={() => setShowTimeline(false)}
                     aria-label="Collapse timeline"
-                    className="hidden text-xs font-bold text-[var(--lofi-muted)] hover:text-[var(--lofi-blue-deep)] lg:block"
+                    className="hidden text-[var(--lofi-muted)] hover:text-[var(--lofi-blue-deep)] lg:block"
                   >
-                    ✕
+                    <X size={14} />
                   </button>
                 </div>
                 <ol className="flex flex-col gap-4">
@@ -585,7 +610,14 @@ function StudyCorner() {
       ) : (
         !mutation.isError && (
           <div className="mx-auto max-w-2xl py-16 text-center">
-            <p className="text-3xl">☕</p>
+            <img
+              src={coffeeAccent.url}
+              alt="Cozy 90s anime coffee mug"
+              width={138}
+              height={138}
+              loading="lazy"
+              className="mx-auto h-[138px] w-[138px] object-contain drop-shadow-[0_10px_24px_oklch(0.4_0.08_56_/_0.3)]"
+            />
             <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
               Queue the beats and drop a scenario to analyze…
             </p>
@@ -594,8 +626,9 @@ function StudyCorner() {
       )}
 
 
-      <footer className="mt-14 text-center text-xs text-[var(--lofi-muted)]">
-        AI-generated guidance — always verify against your investor overlays · stay cozy ✨
+      <footer className="mt-14 flex items-center justify-center gap-1.5 text-center text-xs text-[var(--lofi-muted)]">
+        AI-generated guidance — always verify against your investor overlays · stay cozy
+        <Sparkles size={12} />
       </footer>
     </Shell>
   );
@@ -686,7 +719,7 @@ function HistoryDrawer({
       >
         <div className="flex items-center justify-between gap-3 border-b border-[var(--lofi-cream-deep)] px-5 py-4">
           <h3 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
-            🕑 Previous Scenarios
+            <Clock size={16} /> Previous Scenarios
             <span className="rounded-full bg-[var(--lofi-blue)] px-2 py-0.5 text-[10px] text-[var(--lofi-blue-deep)]">
               {items.length}
             </span>
@@ -695,9 +728,9 @@ function HistoryDrawer({
             type="button"
             onClick={onClose}
             aria-label="Close drawer"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-base font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
           >
-            →
+            <ArrowRight size={16} />
           </button>
         </div>
 
@@ -711,7 +744,7 @@ function HistoryDrawer({
               {similar.length > 0 && (
                 <section>
                   <h4 className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
-                    ✨ Similar Team Scenarios
+                    <Sparkles size={13} /> Similar Team Scenarios
                   </h4>
                   <ul className="flex flex-col gap-2">
                     {similar.map((item) => (
@@ -804,7 +837,7 @@ function HistoryCard({
       )}
       {group && group !== "Unclassified" && (
         <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lofi-blue)]/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--lofi-blue-deep)]">
-          <span aria-hidden>◆</span>
+          <Diamond size={10} aria-hidden />
           {group}
         </span>
       )}
@@ -832,10 +865,10 @@ function RecommendationCard({
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span
-          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
           style={{ backgroundColor: "var(--lofi-blue)" }}
         >
-          🧭 Program Finder — Top Recommendation
+          <Compass size={14} /> Program Finder — Top Recommendation
         </span>
         {program && (
           <span className="rounded-full bg-[var(--lofi-card)] px-3 py-1 text-sm font-extrabold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)]">
@@ -857,12 +890,12 @@ function RecommendationCard({
 
 function ResultCard({
   title,
-  emoji,
+  icon: Icon,
   text,
   accent,
 }: {
   title: string;
-  emoji: string;
+  icon: LucideIcon;
   text: string;
   accent: "lavender" | "peach" | "sage" | "blue";
 }) {
@@ -879,10 +912,10 @@ function ResultCard({
     <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
       <div className="mb-3 flex items-center gap-2">
         <span
-          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
           style={{ backgroundColor: accentVar }}
         >
-          {emoji} {title}
+          <Icon size={14} /> {title}
         </span>
       </div>
       <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
@@ -893,27 +926,27 @@ function ResultCard({
 }
 
 function DocumentationCard({ documentation }: { documentation: Documentation }) {
-  const buckets: { title: string; emoji: string; text: string }[] = [
-    { title: "Borrower Tasks", emoji: "🙋", text: documentation.borrowerTasks },
-    { title: "Borrower & LO Collaboration", emoji: "🤝", text: documentation.collaboration },
-    { title: "LO / Internal Broker Actions", emoji: "🗂️", text: documentation.loActions },
+  const buckets: { title: string; icon: LucideIcon; text: string }[] = [
+    { title: "Borrower Tasks", icon: Hand, text: documentation.borrowerTasks },
+    { title: "Borrower & LO Collaboration", icon: Handshake, text: documentation.collaboration },
+    { title: "LO / Internal Broker Actions", icon: Briefcase, text: documentation.loActions },
   ];
 
   return (
     <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
       <div className="mb-4 flex items-center gap-2">
         <span
-          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
           style={{ backgroundColor: "var(--lofi-sage)" }}
         >
-          📂 Documentation to Request
+          <FolderOpen size={14} /> Documentation to Request
         </span>
       </div>
       <div className="flex flex-col gap-5">
         {buckets.map((b) => (
           <div key={b.title}>
-            <p className="mb-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
-              {b.emoji} {b.title}
+            <p className="mb-1.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+              <b.icon size={13} /> {b.title}
             </p>
             <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
               {b.text}
@@ -928,13 +961,13 @@ function DocumentationCard({ documentation }: { documentation: Documentation }) 
 function statusStyle(status: AlternativeProgram["status"]) {
   switch (status) {
     case "Eligible":
-      return { bg: "var(--lofi-sage)", label: "✅ Eligible" };
+      return { bg: "var(--lofi-sage)", label: "Eligible", icon: CheckCircle2 };
     case "Likely Eligible":
-      return { bg: "var(--lofi-blue)", label: "🟦 Likely Eligible" };
+      return { bg: "var(--lofi-blue)", label: "Likely Eligible", icon: Circle };
     case "High Risk":
-      return { bg: "var(--lofi-peach)", label: "⚠️ High Risk" };
+      return { bg: "var(--lofi-peach)", label: "High Risk", icon: AlertTriangle };
     default:
-      return { bg: "var(--lofi-cream-deep)", label: "⛔ Ineligible" };
+      return { bg: "var(--lofi-cream-deep)", label: "Ineligible", icon: Ban };
   }
 }
 
@@ -943,10 +976,10 @@ function AlternativesCard({ alternatives }: { alternatives: AlternativeProgram[]
     <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
       <div className="mb-4 flex items-center gap-2">
         <span
-          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
           style={{ backgroundColor: "var(--lofi-lavender)" }}
         >
-          🔀 Alternative Loan Programs
+          <Shuffle size={14} /> Alternative Loan Programs
         </span>
       </div>
       {alternatives.length === 0 ? (
@@ -968,10 +1001,10 @@ function AlternativesCard({ alternatives }: { alternatives: AlternativeProgram[]
                     {a.program}
                   </p>
                   <span
-                    className="rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[var(--lofi-blue-deep)]"
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[var(--lofi-blue-deep)]"
                     style={{ backgroundColor: s.bg }}
                   >
-                    {s.label}
+                    <s.icon size={12} /> {s.label}
                   </span>
                 </div>
                 <dl className="flex flex-col gap-1.5 text-sm">

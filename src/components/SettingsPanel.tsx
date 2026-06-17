@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { X, BookOpen } from "lucide-react";
 
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -127,9 +128,9 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             type="button"
             onClick={onClose}
             aria-label="Close settings"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] text-sm font-bold text-[var(--lofi-muted)] transition hover:text-[var(--lofi-ink)]"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] text-[var(--lofi-muted)] transition hover:text-[var(--lofi-ink)]"
           >
-            ✕
+            <X size={15} />
           </button>
         </div>
 
@@ -241,7 +242,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             Admin Config
           </h3>
           <div className="rounded-2xl border border-dashed border-[var(--lofi-cream-deep)] p-6 text-center">
-            <p className="text-2xl">📚</p>
+            <BookOpen size={26} className="mx-auto text-[var(--lofi-blue-deep)]" />
             <p className="mt-2 text-sm font-semibold text-[var(--lofi-ink)]">
               Handbook guideline upload
             </p>
