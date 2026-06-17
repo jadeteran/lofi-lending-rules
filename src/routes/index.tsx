@@ -636,7 +636,24 @@ function StudyCorner() {
               </div>
             </aside>
           )}
+
+          {activeCard && (
+            <CardChatPopover
+              active={activeCard}
+              context={reportContext}
+              history={chatHistories[activeCard.id] ?? []}
+              insight={chatInsights[activeCard.id] ?? null}
+              onHistoryChange={(id, next) =>
+                setChatHistories((prev) => ({ ...prev, [id]: next }))
+              }
+              onInsight={(id, text) =>
+                setChatInsights((prev) => ({ ...prev, [id]: text }))
+              }
+              onClose={() => setActiveCard(null)}
+            />
+          )}
         </div>
+
       ) : (
         !mutation.isError && (
           <div className="mx-auto max-w-2xl py-16 text-center">
