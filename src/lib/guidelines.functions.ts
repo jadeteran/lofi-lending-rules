@@ -230,6 +230,11 @@ Only state a detail if it appears in the provided context; never fabricate names
           collaboration: doc?.collaboration?.trim() || "- None for this scenario.",
           loActions: doc?.loActions?.trim() || "- None for this scenario.",
         },
+        citations:
+          parsed.citations?.trim() ||
+          (groundingNotes
+            ? `- Grounding sources limited this run: ${groundingNotes}`
+            : "- No handbook citations returned for this scenario."),
       };
     } catch (err) {
       const e = err as { statusCode?: number; message?: string };
