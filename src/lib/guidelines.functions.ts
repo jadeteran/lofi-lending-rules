@@ -62,10 +62,16 @@ Each value must be a single string using "- " bullet lines separated by newlines
       }`;
 
       const content: Array<
-        { type: "text"; text: string } | { type: "image"; image: string }
+        | { type: "text"; text: string }
+        | { type: "image"; image: string }
+        | { type: "file"; data: string; mediaType: string }
       > = [{ type: "text", text: textPart }];
-      for (const img of data.images) {
-        content.push({ type: "image", image: img });
+      for (const att of data.attachments) {
+        if (att.mediaType.startsWith("image/")) {
+          content.push({ type: "image", image: att.dataUrl });
+        } else {
+          content.push({ type: "file", data: att.dataUrl, mediaType: att.mediaType });
+        }
       }
 
       const { text } = await generateText({
