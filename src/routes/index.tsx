@@ -271,27 +271,43 @@ function StudyCorner() {
 
   return (
     <Shell>
-      <div className="mb-2 flex items-center justify-end gap-2">
-        {role === "admin" && (
-          <button
-            type="button"
-            onClick={() => setShowSettings(true)}
-            aria-label="Open settings"
-            title="Settings"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-lg shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
-          >
-            ⚙️
-          </button>
-        )}
+      <div className="mb-2 flex items-center justify-between gap-2">
         <button
           type="button"
-          onClick={() => void signOut()}
-          aria-label="Sign out"
-          title="Sign out"
-          className="flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Open previous scenarios"
+          title="Previous Scenarios"
+          className="flex h-10 items-center justify-center gap-2 rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
         >
-          ⏏ Sign out
+          🕑 Previous Scenarios
+          {(historyQuery.data?.length ?? 0) > 0 && (
+            <span className="rounded-full bg-[var(--lofi-blue)] px-2 py-0.5 text-[10px] text-[var(--lofi-blue-deep)]">
+              {historyQuery.data?.length}
+            </span>
+          )}
         </button>
+        <div className="flex items-center gap-2">
+          {role === "admin" && (
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              aria-label="Open settings"
+              title="Settings"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-lg shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
+            >
+              ⚙️
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            aria-label="Sign out"
+            title="Sign out"
+            className="flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
+          >
+            ⏏ Sign out
+          </button>
+        </div>
       </div>
       {showSettings && role === "admin" && (
         <SettingsPanel onClose={() => setShowSettings(false)} />
