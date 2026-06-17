@@ -298,7 +298,7 @@ function StudyCorner() {
           title="Previous Scenarios"
           className="flex h-10 items-center justify-center gap-2 rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
         >
-          🕑 Previous Scenarios
+          <Clock size={16} /> Previous Scenarios
           {(historyQuery.data?.length ?? 0) > 0 && (
             <span className="rounded-full bg-[var(--lofi-blue)] px-2 py-0.5 text-[10px] text-[var(--lofi-blue-deep)]">
               {historyQuery.data?.length}
@@ -314,7 +314,7 @@ function StudyCorner() {
               title="Settings"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-lg shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
             >
-              ⚙️
+              <Settings size={18} />
             </button>
           )}
           <button
@@ -324,7 +324,7 @@ function StudyCorner() {
             title="Sign out"
             className="flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
           >
-            ⏏ Sign out
+            <LogOut size={16} /> Sign out
           </button>
         </div>
       </div>
@@ -332,7 +332,13 @@ function StudyCorner() {
         <SettingsPanel onClose={() => setShowSettings(false)} />
       )}
       <header className="mb-10 text-center">
-        <p className="text-3xl">🎧</p>
+        <img
+          src={heroHeadphones.url}
+          alt="90s anime LOFI headphones"
+          width={96}
+          height={96}
+          className="mx-auto h-24 w-24 object-contain drop-shadow-[0_8px_20px_oklch(0.4_0.08_56_/_0.35)]"
+        />
 
         <h1
           className="mt-2 text-4xl font-bold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl"
