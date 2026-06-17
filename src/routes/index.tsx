@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 
 import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
+import { AuthProvider, useAuth } from "@/components/AuthProvider";
+import { LoginPage } from "@/components/LoginPage";
+import { SettingsPanel } from "@/components/SettingsPanel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,8 +26,39 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: StudyCorner,
+  component: AppRoot,
 });
+
+function AppRoot() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
+  );
+}
+
+function AuthGate() {
+  const { loading, session } = useAuth();
+
+  if (loading) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{
+          background:
+            "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
+          color: "var(--lofi-muted)",
+          fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+        }}
+      >
+        <p className="animate-pulse text-sm">🎧 Tuning in…</p>
+      </div>
+    );
+  }
+
+  if (!session) return <LoginPage />;
+  return <StudyCorner />;
+}
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -65,6 +99,8 @@ function timeOf(ts: number) {
 }
 
 function StudyCorner() {
+  const { role, signOut } = useAuth();
+  const [showSettings, setShowSettings] = useState(false);
   const analyze = useServerFn(analyzeScenario);
   const saveFn = useServerFn(saveScenario);
   const listFn = useServerFn(listScenarios);
@@ -234,8 +270,34 @@ function StudyCorner() {
 
   return (
     <Shell>
+      <div className="mb-2 flex items-center justify-end gap-2">
+        {role === "admin" && (
+          <button
+            type="button"
+            onClick={() => setShowSettings(true)}
+            aria-label="Open settings"
+            title="Settings"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-lg shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
+          >
+            ⚙️
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          aria-label="Sign out"
+          title="Sign out"
+          className="flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
+        >
+          ⏏ Sign out
+        </button>
+      </div>
+      {showSettings && role === "admin" && (
+        <SettingsPanel onClose={() => setShowSettings(false)} />
+      )}
       <header className="mb-10 text-center">
         <p className="text-3xl">🎧</p>
+
         <h1
           className="mt-2 text-4xl font-bold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl"
           style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
