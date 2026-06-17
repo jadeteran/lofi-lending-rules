@@ -178,7 +178,6 @@ function StudyCorner() {
           onChange={(e) => setLoanType(e.target.value)}
           className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]"
         >
-          <option value="">Select a loan program…</option>
           {LOAN_TYPES.map((t) => (
             <option key={t} value={t}>
               {t}
