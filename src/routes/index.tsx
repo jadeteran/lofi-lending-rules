@@ -1020,15 +1020,29 @@ function ResultCard({
   );
 }
 
-function DocumentationCard({ documentation }: { documentation: Documentation }) {
+function DocumentationCard({
+  documentation,
+  onOpenChat,
+  activeId,
+}: {
+  documentation: Documentation;
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
+}) {
   const buckets: { title: string; icon: LucideIcon; text: string }[] = [
     { title: "Borrower Tasks", icon: Hand, text: documentation.borrowerTasks },
     { title: "Borrower & LO Collaboration", icon: Handshake, text: documentation.collaboration },
     { title: "LO / Internal Broker Actions", icon: Briefcase, text: documentation.loActions },
   ];
+  const id = "documentation";
+  const value = buckets.map((b) => `${b.title}:\n${b.text}`).join("\n\n");
 
   return (
-    <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+    <article
+      {...cardClickProps({ id, label: "Documentation to Request", value }, onOpenChat)}
+      className={`flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
+    >
+
       <div className="mb-4 flex items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
