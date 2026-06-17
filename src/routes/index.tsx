@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 
 import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
+import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
