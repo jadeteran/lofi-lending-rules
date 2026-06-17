@@ -333,19 +333,32 @@ function StudyCorner() {
             Paste images/text or upload JPEG, PNG, PDF · up to 6 files
           </span>
 
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="rounded-xl bg-[var(--lofi-blue-deep)] px-7 py-3.5 text-sm font-extrabold text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-          >
-            {mutation.isPending
-              ? hasVersions
-                ? "Re-evaluating…"
-                : "Analyzing the track…"
-              : hasVersions
-                ? "Update report"
-                : "Analyze scenario"}
-          </button>
+          <div className="flex items-center gap-3" style={{ fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif" }}>
+            {(hasVersions || scenario.trim() !== "" || attachments.length > 0 || loanType !== "") && (
+              <button
+                type="button"
+                onClick={clearSlate}
+                className="rounded-xl border border-[var(--lofi-cream)]/30 bg-[var(--lofi-cream)]/5 px-5 py-3.5 text-sm font-semibold text-[var(--lofi-cream)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-[var(--lofi-cream)]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lofi-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+              >
+                ✨ Clear Slate
+              </button>
+            )}
+
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="rounded-xl border border-[var(--lofi-blue)]/40 bg-[var(--lofi-blue-deep)]/90 px-7 py-3.5 text-sm font-bold text-[var(--lofi-cream)] backdrop-blur-md shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lofi-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+            >
+              {mutation.isPending
+                ? isDirty
+                  ? "Recalculating…"
+                  : "Analyzing the track…"
+                : isDirty
+                  ? "Update Analysis"
+                  : "Analyze Scenario"}
+            </button>
+          </div>
+
         </div>
       </form>
 
