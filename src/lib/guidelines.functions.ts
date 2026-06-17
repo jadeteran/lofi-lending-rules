@@ -333,8 +333,9 @@ const UploadInputSchema = z.object({
 });
 
 export type UploadGuidelinesResult = {
-  results: { fileName: string; chunks: number }[];
+  results: { fileName: string; chunks: number; supersededRows: number }[];
   totalChunks: number;
+  totalSuperseded: number;
 };
 
 export const uploadGuidelines = createServerFn({ method: "POST" })
@@ -348,13 +349,14 @@ export const uploadGuidelines = createServerFn({ method: "POST" })
 
     const { ingestHandbookFile } = await import("@/lib/guidelines.server");
 
-    const results: { fileName: string; chunks: number }[] = [];
+    const results: { fileName: string; chunks: number; supersededRows: number }[] = [];
     for (const file of data.files) {
       const r = await ingestHandbookFile(file, key);
       results.push(r);
     }
     const totalChunks = results.reduce((sum, r) => sum + r.chunks, 0);
-    return { results, totalChunks };
+    const totalSuperseded = results.reduce((sum, r) => sum + r.supersededRows, 0);
+    return { results, totalChunks, totalSuperseded };
   });
 
 // ---------------------------------------------------------------------------
