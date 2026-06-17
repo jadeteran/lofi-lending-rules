@@ -26,26 +26,23 @@ export function LoginPage() {
 
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden"
-      style={{ color: "var(--lofi-ink)", fontFamily: FONT }}
+      className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-2"
+      style={{ color: "var(--lofi-ink)", background: "var(--lofi-bg-1)", fontFamily: FONT }}
     >
-      {/* Full-bleed illustration background */}
-      <img
-        src={workspaceAsset.url}
-        alt="Cozy golden-hour lofi study workspace with headphones, plants and coffee"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      {/* Warm readability overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(1200px 700px at 50% 30%, oklch(0.99 0.01 85 / 0.25) 0%, oklch(0.4 0.04 60 / 0.55) 100%)",
-        }}
-      />
+      {/* Left: framed illustration */}
+      <div className="flex items-center justify-center p-6 lg:p-10">
+        <img
+          src={workspaceAsset.url}
+          alt="Cozy golden-hour lofi study workspace with headphones, plants and coffee"
+          className="aspect-square w-full max-w-xl rounded-3xl object-cover shadow-[var(--lofi-shadow)]"
+        />
+      </div>
 
-      {/* Floating glass card */}
-      <div className="relative flex min-h-screen items-center justify-center px-6 py-12">
+      {/* Right: latte backdrop with floating glass card */}
+      <div
+        className="flex min-h-screen items-center justify-center px-6 py-12"
+        style={{ background: "var(--lofi-bg-1)" }}
+      >
         <div
           className="w-full max-w-md rounded-3xl border p-8 backdrop-blur-md sm:p-10"
           style={{
