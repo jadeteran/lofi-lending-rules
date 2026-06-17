@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 
 import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
+import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,16 +66,33 @@ function timeOf(ts: number) {
 
 function StudyCorner() {
   const analyze = useServerFn(analyzeScenario);
+  const saveFn = useServerFn(saveScenario);
+  const listFn = useServerFn(listScenarios);
   const [loanType, setLoanType] = useState<string>("");
   const [scenario, setScenario] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [versions, setVersions] = useState<Version[]>([]);
   const [selected, setSelected] = useState(0);
   const [showTimeline, setShowTimeline] = useState(true);
+  const [showHistory, setShowHistory] = useState(true);
+  const [savedFlash, setSavedFlash] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(1);
 
   const hasVersions = versions.length > 0;
+
+  const historyQuery = useQuery({
+    queryKey: ["scenario-history"],
+    queryFn: () => listFn(),
+    staleTime: 30_000,
+  });
+
+  // Briefly flash the "Saved" indicator, then fade it out.
+  useEffect(() => {
+    if (!savedFlash) return;
+    const t = setTimeout(() => setSavedFlash(false), 2600);
+    return () => clearTimeout(t);
+  }, [savedFlash]);
 
   const mutation = useMutation({
     mutationFn: (vars: {
@@ -99,10 +117,44 @@ function StudyCorner() {
         setSelected(updated.length - 1);
         return updated;
       });
+      // Silent background autosave — never blocks or interrupts the flow.
+      void saveFn({
+        data: {
+          rawScenario: vars.scenario,
+          selectedProgram: vars.loanType,
+          analysis: report as unknown as Record<string, unknown>,
+        },
+      })
+        .then((res) => {
+          if (res?.saved) {
+            setSavedFlash(true);
+            historyQuery.refetch();
+          }
+        })
+        .catch(() => {});
       setScenario("");
       setAttachments([]);
     },
   });
+
+  function loadFromHistory(item: HistoryItem) {
+    nextId.current = 1;
+    setLoanType(item.selectedProgram);
+    setScenario("");
+    setAttachments([]);
+    setVersions([
+      {
+        id: nextId.current++,
+        label: "Base analysis",
+        createdAt: item.updatedAt ? new Date(item.updatedAt).getTime() : Date.now(),
+        report: item.analysis,
+        isBase: true,
+      },
+    ]);
+    setSelected(0);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
 
   const canSubmit =
     loanType.trim() !== "" &&
@@ -275,6 +327,28 @@ function StudyCorner() {
         </div>
       </form>
 
+      <div className="mb-8 -mt-6 flex h-5 items-center justify-end">
+        <span
+          aria-live="polite"
+          className={`flex items-center gap-1.5 text-xs font-semibold text-[var(--lofi-blue-deep)] transition-opacity duration-500 ${
+            savedFlash ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--lofi-blue)] text-[10px] text-[var(--lofi-blue-deep)]">
+            ✓
+          </span>
+          All changes saved to history
+        </span>
+      </div>
+
+      <RecentHistory
+        items={historyQuery.data ?? []}
+        open={showHistory}
+        onToggle={() => setShowHistory((s) => !s)}
+        onPick={loadFromHistory}
+      />
+
+
       {mutation.isError && (
         <div className="mb-6 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
           <p className="text-lg font-bold text-[var(--lofi-blue-deep)]">
@@ -410,6 +484,84 @@ function StudyCorner() {
     </Shell>
   );
 }
+
+function RecentHistory({
+  items,
+  open,
+  onToggle,
+  onPick,
+}: {
+  items: HistoryItem[];
+  open: boolean;
+  onToggle: () => void;
+  onPick: (item: HistoryItem) => void;
+}) {
+  if (items.length === 0) return null;
+
+  function whenOf(iso: string) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return (
+    <section className="mb-10 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-5 shadow-[var(--lofi-shadow)]">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between text-left"
+      >
+        <h3 className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+          🕑 Recent History
+          <span className="rounded-full bg-[var(--lofi-blue)] px-2 py-0.5 text-[10px] text-[var(--lofi-blue-deep)]">
+            {items.length}
+          </span>
+        </h3>
+        <span className="text-xs font-bold text-[var(--lofi-muted)]">
+          {open ? "Hide" : "Show"}
+        </span>
+      </button>
+
+      {open && (
+        <ul className="mt-4 flex flex-col gap-1.5">
+          {items.map((item) => {
+            const title =
+              item.rawScenario.trim().replace(/\s+/g, " ").slice(0, 80) ||
+              item.analysis?.recommendedProgram ||
+              "Saved scenario";
+            return (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => onPick(item)}
+                  className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[var(--lofi-blue)]/15"
+                >
+                  <span className="flex-1 truncate text-sm font-semibold text-[var(--lofi-ink)]">
+                    {title}
+                    {item.rawScenario.length > 80 ? "…" : ""}
+                  </span>
+                  <span className="shrink-0 rounded-full border border-[var(--lofi-cream-deep)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--lofi-blue-deep)]">
+                    {item.selectedProgram || "—"}
+                  </span>
+                  <span className="hidden shrink-0 text-[11px] text-[var(--lofi-muted)] sm:block">
+                    {whenOf(item.updatedAt)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 
 function RecommendationCard({
   program,
