@@ -137,6 +137,15 @@ function StudyCorner() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(1);
 
+  // Report card assistant (localized chat popover).
+  const [activeCard, setActiveCard] = useState<ActiveCard | null>(null);
+  const [chatHistories, setChatHistories] = useState<Record<string, ReportChatMessage[]>>({});
+  const [chatInsights, setChatInsights] = useState<Record<string, string>>({});
+
+  function openCardChat(payload: ActiveCard) {
+    setActiveCard((prev) => (prev?.id === payload.id ? null : payload));
+  }
+
   const hasVersions = versions.length > 0;
   // Once a report exists, any new context or a changed program means there's
   // pending work to recalculate.
