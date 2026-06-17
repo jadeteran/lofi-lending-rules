@@ -145,7 +145,7 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const groundingNotes = grounding.notes.length ? grounding.notes.join(" ") : "";
 
-    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, citations, recommendedProgram, and recommendation. Do not wrap the response in markdown code blocks like \`\`\`json.
+    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, citations, recommendedProgram, recommendation, and fileProfile. Do not wrap the response in markdown code blocks like \`\`\`json.
 
 ${
       isProgramFinder
