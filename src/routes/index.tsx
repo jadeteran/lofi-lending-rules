@@ -585,9 +585,23 @@ function StudyCorner() {
         </div>
       ) : (
         !mutation.isError && (
-          <div className="rounded-xl border border-dashed border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/70 px-8 py-16 text-center">
-            <p className="text-3xl">☕</p>
-            <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
+          <div className="relative mx-auto max-w-2xl text-center">
+            <div
+              className="overflow-hidden rounded-3xl border"
+              style={{
+                borderColor: "var(--lofi-glow-border)",
+                boxShadow: "var(--lofi-shadow)",
+                animation: "lofiFloat 6s ease-in-out infinite",
+              }}
+            >
+              <img
+                src={workspaceAsset.url}
+                alt="Cozy golden-hour lofi study workspace with headphones, plants and coffee"
+                className="h-64 w-full object-cover sm:h-80"
+              />
+            </div>
+            <p className="mt-6 text-3xl">☕</p>
+            <p className="mt-2 text-lg font-bold text-[var(--lofi-blue-deep)]">
               Queue the beats and drop a scenario to analyze…
             </p>
           </div>
