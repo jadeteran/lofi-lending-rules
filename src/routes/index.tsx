@@ -327,6 +327,20 @@ function StudyCorner() {
         </div>
       </form>
 
+      <div className="mb-8 -mt-6 flex h-5 items-center justify-end">
+        <span
+          aria-live="polite"
+          className={`flex items-center gap-1.5 text-xs font-semibold text-[var(--lofi-blue-deep)] transition-opacity duration-500 ${
+            savedFlash ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--lofi-blue)] text-[10px] text-[var(--lofi-blue-deep)]">
+            ✓
+          </span>
+          All changes saved to history
+        </span>
+      </div>
+
       {mutation.isError && (
         <div className="mb-6 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
           <p className="text-lg font-bold text-[var(--lofi-blue-deep)]">
