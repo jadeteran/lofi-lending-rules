@@ -324,6 +324,7 @@ function StudyCorner() {
               <ResultCard title="Guideline Requirements" emoji="📋" text={current.report.guidelineRequirements} accent="lavender" />
               <ResultCard title="Potential Roadblocks" emoji="🚧" text={current.report.roadblocks} accent="peach" />
               <ResultCard title="LTV / Eligibility" emoji="📊" text={current.report.ltv} accent="blue" />
+              <AlternativesCard alternatives={current.report.alternatives} />
               <DocumentationCard documentation={current.report.documentation} />
             </div>
           </section>
