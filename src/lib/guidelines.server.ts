@@ -240,7 +240,7 @@ export async function ingestHandbookFile(
       section_citation: `${handbookName} — part ${i + 1}/${chunks.length}`,
       content: chunks[i],
       metadata: { source: file.name, chunk: i + 1, uploadedAt: new Date().toISOString() },
-      embedding,
+      embedding: JSON.stringify(embedding),
     });
   }
 
