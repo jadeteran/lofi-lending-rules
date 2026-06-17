@@ -7,7 +7,6 @@ import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 export const PROGRAM_FINDER = "Unsure / Program Finder" as const;
 
 export const LOAN_TYPES = [
-  PROGRAM_FINDER,
   "Conventional - Fannie Mae",
   "Conventional - Freddie Mac",
   "Government - FHA",
@@ -16,6 +15,7 @@ export const LOAN_TYPES = [
   "Jumbo - Non-Conforming",
   "Non-QM / DSCR",
   "Private Money / Hard Money",
+  PROGRAM_FINDER,
 ] as const;
 
 export type Documentation = {

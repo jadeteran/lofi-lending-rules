@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-import { analyzeScenario, LOAN_TYPES, PROGRAM_FINDER, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
+import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,7 +65,7 @@ function timeOf(ts: number) {
 
 function StudyCorner() {
   const analyze = useServerFn(analyzeScenario);
-  const [loanType, setLoanType] = useState<string>(PROGRAM_FINDER);
+  const [loanType, setLoanType] = useState<string>("");
   const [scenario, setScenario] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [versions, setVersions] = useState<Version[]>([]);
@@ -178,6 +178,9 @@ function StudyCorner() {
           onChange={(e) => setLoanType(e.target.value)}
           className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]"
         >
+          <option value="" disabled>
+            Select an option…
+          </option>
           {LOAN_TYPES.map((t) => (
             <option key={t} value={t}>
               {t}
