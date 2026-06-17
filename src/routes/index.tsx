@@ -719,7 +719,7 @@ function HistoryDrawer({
       >
         <div className="flex items-center justify-between gap-3 border-b border-[var(--lofi-cream-deep)] px-5 py-4">
           <h3 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
-            🕑 Previous Scenarios
+            <Clock size={16} /> Previous Scenarios
             <span className="rounded-full bg-[var(--lofi-blue)] px-2 py-0.5 text-[10px] text-[var(--lofi-blue-deep)]">
               {items.length}
             </span>
@@ -728,9 +728,9 @@ function HistoryDrawer({
             type="button"
             onClick={onClose}
             aria-label="Close drawer"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-base font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
           >
-            →
+            <ArrowRight size={16} />
           </button>
         </div>
 
