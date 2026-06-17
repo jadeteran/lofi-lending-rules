@@ -1,27 +1,35 @@
-# Restyle Login Page to Match 90s-Anime Home Theme
+# Refine Login Scene: Girl + Cat
 
-Re-skin the login page so its layout and art match the attached reference and the home page's grainy, 2D, cel-shaded 90s-anime look. The login form elements inside the card stay exactly as they are — only the surrounding stylization and layout change.
+Regenerate the full-bleed login background illustration (`src/assets/lofi-login-scene.png`) to better match the reference, keeping the same grainy 2D 90s-anime style and clean center space for the floating login card. No layout/code changes — just swap the asset.
 
-## 1. New full-bleed scene illustration
+## Changes to the illustration
 
-Generate one wide background illustration matching the reference, rendered in the home page's stylization (flat 2D cel-shading, bold ink outlines, grainy texture, warm "iced latte" palette):
-- Left: the fluffy long-haired **black cat** (cute small fangs, slight smile) resting on the wooden window sill.
-- Right: the **girl with glasses + LOFI over-ear headphones**, side profile, scarf, trailing pothos/plants and desk lamp.
-- Center/back: window with calm clouds + soft sky and a warm interior, leaving open space in the middle for the floating login card.
-- Save `src/assets/lofi-login-scene.png`, upload via `lovable-assets`, write `.asset.json`.
+**Girl (right side):**
 
-## 2. Rework `src/components/LoginPage.tsx` layout
+- Match the reference more closely: long, flowing dark purple-black hair (not short brown), gentle anime side profile facing LEFT toward the card.
+- Same headphones as the reference: large tan/cream "LOFI"-labeled over-ear headphones (replace the dark headphones).
+- Same pose/position as the reference — seated on the right, body angled left.
+- Keep the pen: she holds a pen that extends left so its tip touches the edge of where the sign-in card floats (center).
+- Keep scarf, trailing pothos plants, and desk lamp accents.
 
-- Replace the asymmetric split-grid with a **single full-bleed background**: the new scene fills the screen (`object-cover`), with the login card floating centered over it (matching the reference composition).
-- Keep the frosted-glass card styling consistent with the home theme: `backdrop-blur-lg`, golden glowing border (`--lofi-glow-border`), `--lofi-card` background, existing shadow.
-- **Do not change anything inside the card**: keep the headphone badge, "Welcome back" heading/subtext, Email + Password fields, error state, and Sign in button exactly as-is.
-- Keep all auth logic (`useAuth`, `handleSubmit`) untouched.
-- Add a subtle scrim behind the card if needed for text contrast over the illustration; ensure mobile keeps the card readable and centered.
+**Cat (left side):**
 
-## 3. Verify
-- `browser--view_preview` on the login view (desktop + mobile): scene matches the reference, grainy 2D home stylization, card floats centered, form unchanged and readable.
+- Less happy expression — change from the smiling/content look to a calmer, neutral/aloof expression (eyes open or relaxed, mouth neutral, tiny fangs optional and subtle).
+- Keep the fluffy long-haired black cat resting on the wooden sill.
+
+**Composition:**
+
+- Keep the warm "iced latte" palette, window with soft sky/clouds, golden interior light.
+- Preserve open, uncluttered center space (no baked-in text, boxes, or UI) so the real login card sits cleanly over it.
+
+## Steps
+
+1. Generate the revised scene to `src/assets/lofi-login-scene.png`.
+2. Upload via `lovable-assets`, overwrite the existing `lofi-login-scene.png.asset.json` pointer.
+3. Verify the new art renders behind the unchanged login card (form untouched).
 
 ## Notes
-- Frontend/presentation only; no backend or form changes.
-- Reference image used for layout/art direction only — not embedded directly.
-- Old `lofi-workspace.png` asset can be removed once the new scene is wired in.
+
+- Reference image used for art direction only — not embedded.
+- May take 1–2 generation passes to nail the headphones, pen-to-card touch, and cat expression. 
+- avoid looking too "cute" maintain calm vibe
