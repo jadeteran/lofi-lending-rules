@@ -30,13 +30,13 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div
       className="min-h-screen"
       style={{
-        fontFamily: "'Nunito', ui-sans-serif, system-ui, sans-serif",
+        fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
         background:
-          "linear-gradient(160deg, var(--lofi-cream) 0%, var(--lofi-lavender) 55%, var(--lofi-cream-deep) 100%)",
+          "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
         color: "var(--lofi-ink)",
       }}
     >
-      <div className="mx-auto max-w-6xl px-6 py-16 sm:px-10 sm:py-20">{children}</div>
+      <div className="mx-auto max-w-5xl px-6 py-16 sm:px-10 sm:py-20">{children}</div>
     </div>
   );
 }
@@ -162,7 +162,10 @@ function StudyCorner() {
     <Shell>
       <header className="mb-10 text-center">
         <p className="text-3xl">🎧</p>
-        <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl">
+        <h1
+          className="mt-2 text-4xl font-bold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl"
+          style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
+        >
           AI Guideline Assistant
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-[var(--lofi-muted)]">
@@ -176,7 +179,7 @@ function StudyCorner() {
         <select
           value={loanType}
           onChange={(e) => setLoanType(e.target.value)}
-          className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]"
+          className="rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]"
         >
           <option value="" disabled>
             Select an option…
@@ -198,7 +201,7 @@ function StudyCorner() {
               ? "Add updated context or an operational override… e.g. 'Borrower switched from cash-out to rate-and-term; appraisal came in at $640k.'"
               : "Paste or type a tough stip, describe the loan scenario, or paste/upload a screenshot… e.g. 'Borrower is self-employed with declining income year over year and underwriter wants P&L support.'"
           }
-          className="w-full resize-y rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold leading-relaxed text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)] placeholder:font-normal placeholder:text-[var(--lofi-muted)]"
+          className="w-full resize-y rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold leading-relaxed text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)] placeholder:font-normal placeholder:text-[var(--lofi-muted)]"
         />
 
         {attachments.length > 0 && (
@@ -248,7 +251,7 @@ function StudyCorner() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-5 py-3 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+            className="rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-5 py-3 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
           >
             📎 Upload JPEG, PNG, or PDF
           </button>
@@ -259,7 +262,7 @@ function StudyCorner() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="rounded-2xl bg-[var(--lofi-blue-deep)] px-7 py-3.5 text-sm font-extrabold text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+            className="rounded-xl bg-[var(--lofi-blue-deep)] px-7 py-3.5 text-sm font-extrabold text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {mutation.isPending
               ? hasVersions
@@ -273,7 +276,7 @@ function StudyCorner() {
       </form>
 
       {mutation.isError && (
-        <div className="mb-6 rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
+        <div className="mb-6 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
           <p className="text-lg font-bold text-[var(--lofi-blue-deep)]">
             The record skipped a beat 🎧
           </p>
@@ -342,7 +345,7 @@ function StudyCorner() {
 
           {showTimeline && (
             <aside className="lg:w-72 lg:shrink-0">
-              <div className="rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-5 shadow-[var(--lofi-shadow)] lg:sticky lg:top-8">
+              <div className="rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-5 shadow-[var(--lofi-shadow)] lg:sticky lg:top-8">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
                     Event Timeline
@@ -392,7 +395,7 @@ function StudyCorner() {
         </div>
       ) : (
         !mutation.isError && (
-          <div className="rounded-3xl border border-dashed border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/70 px-8 py-16 text-center">
+          <div className="rounded-xl border border-dashed border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/70 px-8 py-16 text-center">
             <p className="text-3xl">☕</p>
             <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
               Queue the beats and drop a scenario to analyze…
@@ -417,7 +420,7 @@ function RecommendationCard({
 }) {
   return (
     <article
-      className="flex flex-col rounded-3xl border-2 p-7 shadow-[var(--lofi-shadow)]"
+      className="flex flex-col rounded-xl border-2 p-7 shadow-[var(--lofi-shadow)]"
       style={{
         borderColor: "var(--lofi-blue)",
         background:
@@ -470,7 +473,7 @@ function ResultCard({
           : "var(--lofi-sage)";
 
   return (
-    <article className="flex flex-col rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+    <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
       <div className="mb-3 flex items-center gap-2">
         <span
           className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
@@ -494,7 +497,7 @@ function DocumentationCard({ documentation }: { documentation: Documentation }) 
   ];
 
   return (
-    <article className="flex flex-col rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+    <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
       <div className="mb-4 flex items-center gap-2">
         <span
           className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
@@ -534,7 +537,7 @@ function statusStyle(status: AlternativeProgram["status"]) {
 
 function AlternativesCard({ alternatives }: { alternatives: AlternativeProgram[] }) {
   return (
-    <article className="flex flex-col rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+    <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
       <div className="mb-4 flex items-center gap-2">
         <span
           className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
@@ -555,7 +558,7 @@ function AlternativesCard({ alternatives }: { alternatives: AlternativeProgram[]
             return (
               <div
                 key={`${a.program}-${i}`}
-                className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/60 p-4"
+                className="rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/60 p-4"
               >
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-extrabold text-[var(--lofi-blue-deep)]">
