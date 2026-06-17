@@ -34,7 +34,7 @@ export function LoginPage() {
       <img
         src={loginScene.url}
         alt="Cozy 90s anime study scene with a black cat and a girl wearing headphones"
-        className="absolute inset-0 h-full w-full object-cover opacity-85"
+        className="absolute inset-0 h-full w-full object-cover opacity-[0.78]"
       />
       {/* Soft scrim for card contrast */}
       <div
