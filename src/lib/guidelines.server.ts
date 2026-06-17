@@ -54,6 +54,7 @@ async function embedQuery(text: string, lovableApiKey: string): Promise<number[]
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${lovableApiKey}`,
+      "Lovable-API-Key": lovableApiKey,
     },
     body: JSON.stringify({ model: EMBED_MODEL, input: text }),
   });
