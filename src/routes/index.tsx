@@ -894,22 +894,60 @@ function HistoryCard({
 
 
 
+const CARD_INTERACTIVE =
+  "cursor-pointer transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lofi-blue)]";
+
+function activeRing(isActive: boolean) {
+  return isActive
+    ? "ring-2 ring-[var(--lofi-blue)] shadow-[0_0_0_5px_oklch(0.7_0.1_230_/_0.18)]"
+    : "";
+}
+
+function cardClickProps(
+  payload: { id: string; label: string; value: string },
+  onOpenChat: (p: ActiveCard) => void,
+) {
+  return {
+    role: "button" as const,
+    tabIndex: 0,
+    "aria-label": `Ask the assistant about ${payload.label}`,
+    onClick: (e: React.MouseEvent<HTMLElement>) =>
+      onOpenChat({ ...payload, anchorEl: e.currentTarget }),
+    onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onOpenChat({ ...payload, anchorEl: e.currentTarget });
+      }
+    },
+  };
+}
+
 function RecommendationCard({
   program,
   recommendation,
+  onOpenChat,
+  activeId,
 }: {
   program: string;
   recommendation: string;
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
 }) {
+  const id = "recommendation";
   return (
     <article
-      className="flex flex-col rounded-xl border-2 p-7 shadow-[var(--lofi-shadow)]"
+      {...cardClickProps(
+        { id, label: "Top Recommendation", value: `${program ? `Program: ${program}\n` : ""}${recommendation}` },
+        onOpenChat,
+      )}
+      className={`flex flex-col rounded-xl border-2 p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
       style={{
         borderColor: "var(--lofi-blue)",
         background:
           "linear-gradient(150deg, var(--lofi-card) 0%, var(--lofi-blue) 220%)",
       }}
     >
+
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
