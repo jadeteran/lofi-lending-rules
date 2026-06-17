@@ -491,8 +491,8 @@ function StudyCorner() {
 
       {mutation.isError && (
         <div className="mb-6 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
-          <p className="text-lg font-bold text-[var(--lofi-blue-deep)]">
-            The record skipped a beat 🎧
+          <p className="flex items-center justify-center gap-2 text-lg font-bold text-[var(--lofi-blue-deep)]">
+            The record skipped a beat <Headphones size={18} />
           </p>
           <p className="mt-2 text-sm text-[var(--lofi-muted)]">
             {(mutation.error as Error).message}
@@ -548,12 +548,12 @@ function StudyCorner() {
                     recommendation={current.report.recommendation}
                   />
                 )}
-              <ResultCard title="Guideline Requirements" emoji="📋" text={current.report.guidelineRequirements} accent="lavender" />
-              <ResultCard title="Potential Roadblocks" emoji="🚧" text={current.report.roadblocks} accent="peach" />
-              <ResultCard title="LTV / Eligibility" emoji="📊" text={current.report.ltv} accent="blue" />
+              <ResultCard title="Guideline Requirements" icon={ClipboardList} text={current.report.guidelineRequirements} accent="lavender" />
+              <ResultCard title="Potential Roadblocks" icon={Construction} text={current.report.roadblocks} accent="peach" />
+              <ResultCard title="LTV / Eligibility" icon={BarChart3} text={current.report.ltv} accent="blue" />
               <AlternativesCard alternatives={current.report.alternatives} />
               <DocumentationCard documentation={current.report.documentation} />
-              <ResultCard title="Handbook Citations & Sources" emoji="📚" text={current.report.citations} accent="sage" />
+              <ResultCard title="Handbook Citations & Sources" icon={BookOpen} text={current.report.citations} accent="sage" />
             </div>
           </section>
 
@@ -568,9 +568,9 @@ function StudyCorner() {
                     type="button"
                     onClick={() => setShowTimeline(false)}
                     aria-label="Collapse timeline"
-                    className="hidden text-xs font-bold text-[var(--lofi-muted)] hover:text-[var(--lofi-blue-deep)] lg:block"
+                    className="hidden text-[var(--lofi-muted)] hover:text-[var(--lofi-blue-deep)] lg:block"
                   >
-                    ✕
+                    <X size={14} />
                   </button>
                 </div>
                 <ol className="flex flex-col gap-4">
@@ -610,7 +610,14 @@ function StudyCorner() {
       ) : (
         !mutation.isError && (
           <div className="mx-auto max-w-2xl py-16 text-center">
-            <p className="text-3xl">☕</p>
+            <img
+              src={coffeeAccent.url}
+              alt="Cozy 90s anime coffee mug"
+              width={138}
+              height={138}
+              loading="lazy"
+              className="mx-auto h-[138px] w-[138px] object-contain drop-shadow-[0_10px_24px_oklch(0.4_0.08_56_/_0.3)]"
+            />
             <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
               Queue the beats and drop a scenario to analyze…
             </p>
@@ -619,8 +626,9 @@ function StudyCorner() {
       )}
 
 
-      <footer className="mt-14 text-center text-xs text-[var(--lofi-muted)]">
-        AI-generated guidance — always verify against your investor overlays · stay cozy ✨
+      <footer className="mt-14 flex items-center justify-center gap-1.5 text-center text-xs text-[var(--lofi-muted)]">
+        AI-generated guidance — always verify against your investor overlays · stay cozy
+        <Sparkles size={12} />
       </footer>
     </Shell>
   );
