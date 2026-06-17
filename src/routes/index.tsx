@@ -405,6 +405,47 @@ function StudyCorner() {
   );
 }
 
+function RecommendationCard({
+  program,
+  recommendation,
+}: {
+  program: string;
+  recommendation: string;
+}) {
+  return (
+    <article
+      className="flex flex-col rounded-3xl border-2 p-7 shadow-[var(--lofi-shadow)]"
+      style={{
+        borderColor: "var(--lofi-blue)",
+        background:
+          "linear-gradient(150deg, var(--lofi-card) 0%, var(--lofi-blue) 220%)",
+      }}
+    >
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span
+          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          style={{ backgroundColor: "var(--lofi-blue)" }}
+        >
+          🧭 Program Finder — Top Recommendation
+        </span>
+        {program && (
+          <span className="rounded-full bg-[var(--lofi-card)] px-3 py-1 text-sm font-extrabold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)]">
+            {program}
+          </span>
+        )}
+      </div>
+      <p className="mb-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+        Why this program wins
+      </p>
+      <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+        {recommendation}
+      </p>
+    </article>
+  );
+}
+
+
+
 function ResultCard({
   title,
   emoji,
