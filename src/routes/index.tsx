@@ -140,19 +140,28 @@ function StudyCorner() {
           className="w-full resize-y rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold leading-relaxed text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)] placeholder:font-normal placeholder:text-[var(--lofi-muted)]"
         />
 
-        {images.length > 0 && (
+        {attachments.length > 0 && (
           <div className="flex flex-wrap gap-3">
-            {images.map((src, i) => (
+            {attachments.map((att, i) => (
               <div key={i} className="relative">
-                <img
-                  src={src}
-                  alt={`Attachment ${i + 1}`}
-                  className="h-20 w-20 rounded-xl border border-[var(--lofi-cream-deep)] object-cover shadow-[var(--lofi-shadow)]"
-                />
+                {att.mediaType.startsWith("image/") ? (
+                  <img
+                    src={att.dataUrl}
+                    alt={att.name}
+                    className="h-20 w-20 rounded-xl border border-[var(--lofi-cream-deep)] object-cover shadow-[var(--lofi-shadow)]"
+                  />
+                ) : (
+                  <div className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-1 text-center shadow-[var(--lofi-shadow)]">
+                    <span className="text-2xl">📄</span>
+                    <span className="w-full truncate text-[10px] font-semibold text-[var(--lofi-muted)]">
+                      {att.name}
+                    </span>
+                  </div>
+                )}
                 <button
                   type="button"
-                  onClick={() => removeImage(i)}
-                  aria-label="Remove image"
+                  onClick={() => removeAttachment(i)}
+                  aria-label="Remove attachment"
                   className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lofi-blue-deep)] text-xs font-bold text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)]"
                 >
                   ✕
@@ -165,7 +174,7 @@ function StudyCorner() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,application/pdf"
           multiple
           className="hidden"
           onChange={(e) => {
@@ -180,11 +189,12 @@ function StudyCorner() {
             onClick={() => fileInputRef.current?.click()}
             className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-5 py-3 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
           >
-            📎 Upload image
+            📎 Upload JPEG, PNG, or PDF
           </button>
           <span className="text-xs text-[var(--lofi-muted)]">
-            Paste images or text directly into the box · up to 6 images
+            Paste images/text or upload JPEG, PNG, PDF · up to 6 files
           </span>
+
 
           <button
             type="submit"
