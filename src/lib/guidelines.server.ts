@@ -234,30 +234,59 @@ export async function ingestHandbookFile(
 
   const handbookName = file.name.replace(/\.[^.]+$/, "");
 
-  // Supersede: remove any prior chunks for the same handbook so the newly
-  // uploaded version becomes the single source of truth. This guarantees that
-  // when the new doc conflicts with older content, the old content is gone and
-  // can never resurface in vector search.
-  let supersededRows = 0;
-  const { data: oldRows, error: deleteError } = await admin
-    .from("guideline_library")
-    .delete()
-    .eq("handbook_name", handbookName)
-    .select("id");
-  if (deleteError) {
-    throw new Error(`Failed to clear previous "${handbookName}" version: ${deleteError.message}`);
+  // Embed every new chunk up front so we can both (a) detect which existing
+  // passages it conflicts with and (b) insert it afterwards.
+  const embeddings: number[][] = [];
+  for (let i = 0; i < chunks.length; i++) {
+    embeddings.push(await embedText(chunks[i], lovableApiKey));
   }
-  supersededRows = oldRows?.length ?? 0;
+
+  // Selective supersede: instead of wiping the entire handbook, only remove the
+  // existing passages that the new content actually conflicts with / overlaps.
+  // For each incoming chunk we find the closest existing passages via vector
+  // similarity and supersede only those above a high threshold. This lets an
+  // agency update override the specific guidance it touches while leaving the
+  // rest of the handbook intact.
+  const SUPERSEDE_THRESHOLD = 0.86; // cosine similarity — near-duplicate / same topic
+  const idsToSupersede = new Set<string>();
+  for (const embedding of embeddings) {
+    const { data: matches, error: matchError } = await admin.rpc("match_guidelines", {
+      query_embedding: JSON.stringify(embedding),
+      match_count: 4,
+    });
+    if (matchError) {
+      throw new Error(`Conflict detection failed: ${matchError.message}`);
+    }
+    for (const m of matches ?? []) {
+      const sim = typeof m.similarity === "number" ? m.similarity : 0;
+      if (sim >= SUPERSEDE_THRESHOLD && m.id != null) {
+        idsToSupersede.add(String(m.id));
+      }
+    }
+  }
+
+  let supersededRows = 0;
+  if (idsToSupersede.size > 0) {
+    const ids = Array.from(idsToSupersede);
+    const { data: oldRows, error: deleteError } = await admin
+      .from("guideline_library")
+      .delete()
+      .in("id", ids)
+      .select("id");
+    if (deleteError) {
+      throw new Error(`Failed to supersede conflicting passages: ${deleteError.message}`);
+    }
+    supersededRows = oldRows?.length ?? 0;
+  }
 
   const rows: Record<string, unknown>[] = [];
   for (let i = 0; i < chunks.length; i++) {
-    const embedding = await embedText(chunks[i], lovableApiKey);
     rows.push({
       handbook_name: handbookName,
       section_citation: `${handbookName} — part ${i + 1}/${chunks.length}`,
       content: chunks[i],
       metadata: { source: file.name, chunk: i + 1, uploadedAt: new Date().toISOString() },
-      embedding: JSON.stringify(embedding),
+      embedding: JSON.stringify(embeddings[i]),
     });
   }
 
