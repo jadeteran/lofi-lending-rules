@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
-import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
+import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
