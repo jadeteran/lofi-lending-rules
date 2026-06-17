@@ -70,6 +70,7 @@ const PreviousReportSchema = z.object({
     collaboration: "",
     loActions: "",
   }),
+  citations: z.string().default(""),
 });
 
 const InputSchema = z
