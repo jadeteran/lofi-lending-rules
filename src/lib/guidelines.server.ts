@@ -213,6 +213,7 @@ function chunkText(text: string, maxLen = 1200, overlap = 150): string[] {
 export type IngestResult = {
   fileName: string;
   chunks: number;
+  supersededRows: number;
 };
 
 export async function ingestHandbookFile(
