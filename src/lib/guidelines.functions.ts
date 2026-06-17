@@ -21,10 +21,15 @@ export type Analysis = {
   documentation: string;
 };
 
-const InputSchema = z.object({
-  loanType: z.string().min(1),
-  scenario: z.string().min(1),
-});
+const InputSchema = z
+  .object({
+    loanType: z.string().min(1),
+    scenario: z.string().default(""),
+    images: z.array(z.string()).max(6).default([]),
+  })
+  .refine((d) => d.scenario.trim() !== "" || d.images.length > 0, {
+    message: "Add a scenario or attach an image.",
+  });
 
 export const analyzeScenario = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
