@@ -41,30 +41,38 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
+type Attachment = { name: string; mediaType: string; dataUrl: string };
+
+const ACCEPTED = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+
 function StudyCorner() {
   const analyze = useServerFn(analyzeScenario);
   const [loanType, setLoanType] = useState("");
   const [scenario, setScenario] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const mutation = useMutation({
-    mutationFn: (vars: { loanType: string; scenario: string; images: string[] }) =>
+    mutationFn: (vars: { loanType: string; scenario: string; attachments: Attachment[] }) =>
       analyze({ data: vars }),
   });
 
   const canSubmit =
     loanType.trim() !== "" &&
-    (scenario.trim() !== "" || images.length > 0) &&
+    (scenario.trim() !== "" || attachments.length > 0) &&
     !mutation.isPending;
 
   function readFiles(files: FileList | File[]) {
-    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const list = Array.from(files).filter((f) => ACCEPTED.includes(f.type));
     list.forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
         const url = reader.result as string;
-        setImages((prev) => (prev.length >= 6 ? prev : [...prev, url]));
+        setAttachments((prev) =>
+          prev.length >= 6
+            ? prev
+            : [...prev, { name: file.name, mediaType: file.type, dataUrl: url }],
+        );
       };
       reader.readAsDataURL(file);
     });
@@ -75,7 +83,7 @@ function StudyCorner() {
     if (!items) return;
     const files: File[] = [];
     for (const item of items) {
-      if (item.kind === "file" && item.type.startsWith("image/")) {
+      if (item.kind === "file" && ACCEPTED.includes(item.type)) {
         const f = item.getAsFile();
         if (f) files.push(f);
       }
@@ -83,14 +91,14 @@ function StudyCorner() {
     if (files.length > 0) readFiles(files);
   }
 
-  function removeImage(idx: number) {
-    setImages((prev) => prev.filter((_, i) => i !== idx));
+  function removeAttachment(idx: number) {
+    setAttachments((prev) => prev.filter((_, i) => i !== idx));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
-    mutation.mutate({ loanType, scenario: scenario.trim(), images });
+    mutation.mutate({ loanType, scenario: scenario.trim(), attachments });
   }
 
   const result = mutation.data;
