@@ -23,7 +23,30 @@ export type SavedScenarioRow = {
   selectedProgram: string;
   analysis: unknown;
   updatedAt: string;
+  summaryTitle: string;
+  creditScore: string;
+  dti: string;
+  ltv: string;
+  propertyState: string;
+  profileGroup: string;
 };
+
+/** Pull the structured catalog header out of the analysis JSON payload. */
+function extractProfile(analysis: unknown) {
+  const fp =
+    (analysis && typeof analysis === "object"
+      ? (analysis as Record<string, unknown>).fileProfile
+      : null) as Record<string, unknown> | null;
+  const s = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+  return {
+    summary_title: s(fp?.summaryTitle),
+    credit_score: s(fp?.creditScore),
+    dti: s(fp?.dti),
+    ltv: s(fp?.ltv),
+    property_state: s(fp?.propertyState),
+    profile_group: s(fp?.profileGroup),
+  };
+}
 
 /**
  * Silently upsert a finished analysis into public.saved_scenarios.
@@ -42,6 +65,7 @@ export async function saveScenarioRow(input: {
       raw_scenario: input.rawScenario,
       selected_program: input.selectedProgram,
       analysis_output: input.analysis as Record<string, unknown>,
+      ...extractProfile(input.analysis),
     })
     .select("id")
     .single();
