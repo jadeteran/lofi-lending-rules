@@ -26,19 +26,19 @@ export function LoginPage() {
 
   return (
     <div
-      className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
+      className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]"
       style={{ color: "var(--lofi-ink)", background: "var(--lofi-bg-1)", fontFamily: FONT }}
     >
-      {/* Left: framed illustration */}
-      <div className="flex items-center justify-center p-6 lg:p-10">
+      {/* Left: full-bleed illustration */}
+      <div className="relative min-h-[40vh] lg:min-h-screen">
         <img
           src={workspaceAsset.url}
           alt="Cozy golden-hour lofi study workspace with headphones, plants and coffee"
-          className="aspect-square w-full max-w-md rounded-3xl object-cover shadow-[var(--lofi-shadow)]"
+          className="absolute inset-0 h-full w-full object-cover"
         />
       </div>
 
-      {/* Right: latte backdrop with floating frosted glass card */}
+      {/* Right: skinnier solid latte panel with floating frosted glass card */}
       <div
         className="flex min-h-screen items-center justify-center px-6 py-12"
         style={{ background: "var(--lofi-bg-2)" }}
