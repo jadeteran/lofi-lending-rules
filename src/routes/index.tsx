@@ -9,8 +9,9 @@ import {
   CheckCircle2, Circle, AlertTriangle, Ban, type LucideIcon,
 } from "lucide-react";
 
-import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile } from "@/lib/guidelines.functions";
+import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
+import { CardChatPopover, type ActiveCard, type ReportContext } from "@/components/ReportCardChat";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -135,6 +136,15 @@ function StudyCorner() {
   const [lastProgram, setLastProgram] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(1);
+
+  // Report card assistant (localized chat popover).
+  const [activeCard, setActiveCard] = useState<ActiveCard | null>(null);
+  const [chatHistories, setChatHistories] = useState<Record<string, ReportChatMessage[]>>({});
+  const [chatInsights, setChatInsights] = useState<Record<string, string>>({});
+
+  function openCardChat(payload: ActiveCard) {
+    setActiveCard((prev) => (prev?.id === payload.id ? null : payload));
+  }
 
   const hasVersions = versions.length > 0;
   // Once a report exists, any new context or a changed program means there's
@@ -288,6 +298,22 @@ function StudyCorner() {
 
   const current = versions[selected];
   const isLatest = selected === versions.length - 1;
+
+  // Close the card assistant when the viewed version changes so its context
+  // never goes stale against a different report.
+  useEffect(() => {
+    setActiveCard(null);
+  }, [selected]);
+
+  const reportContext: ReportContext = {
+    loanType,
+    scenario,
+    versionLabel: current ? (current.isBase ? "Base analysis" : current.label) : "",
+    report: (current?.report ?? {}) as unknown as Record<string, unknown>,
+  };
+
+
+
 
   return (
     <Shell>
@@ -547,16 +573,19 @@ function StudyCorner() {
                   <RecommendationCard
                     program={current.report.recommendedProgram}
                     recommendation={current.report.recommendation}
+                    onOpenChat={openCardChat}
+                    activeId={activeCard?.id ?? null}
                   />
                 )}
-              <ResultCard title="Guideline Requirements" icon={ClipboardList} text={current.report.guidelineRequirements} accent="lavender" />
-              <ResultCard title="Potential Roadblocks" icon={Construction} text={current.report.roadblocks} accent="peach" />
-              <ResultCard title="LTV / Eligibility" icon={BarChart3} text={current.report.ltv} accent="blue" />
-              <AlternativesCard alternatives={current.report.alternatives} />
-              <DocumentationCard documentation={current.report.documentation} />
-              <ResultCard title="Handbook Citations & Sources" icon={BookOpen} text={current.report.citations} accent="sage" />
+              <ResultCard id="guideline-requirements" title="Guideline Requirements" icon={ClipboardList} text={current.report.guidelineRequirements} accent="lavender" onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <ResultCard id="roadblocks" title="Potential Roadblocks" icon={Construction} text={current.report.roadblocks} accent="peach" onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <ResultCard id="ltv" title="LTV / Eligibility" icon={BarChart3} text={current.report.ltv} accent="blue" onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <AlternativesCard alternatives={current.report.alternatives} onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <DocumentationCard documentation={current.report.documentation} onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <ResultCard id="citations" title="Handbook Citations & Sources" icon={BookOpen} text={current.report.citations} accent="sage" onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
             </div>
           </section>
+
 
           {showTimeline && (
             <aside className="lg:w-72 lg:shrink-0">
@@ -607,7 +636,24 @@ function StudyCorner() {
               </div>
             </aside>
           )}
+
+          {activeCard && (
+            <CardChatPopover
+              active={activeCard}
+              context={reportContext}
+              history={chatHistories[activeCard.id] ?? []}
+              insight={chatInsights[activeCard.id] ?? null}
+              onHistoryChange={(id, next) =>
+                setChatHistories((prev) => ({ ...prev, [id]: next }))
+              }
+              onInsight={(id, text) =>
+                setChatInsights((prev) => ({ ...prev, [id]: text }))
+              }
+              onClose={() => setActiveCard(null)}
+            />
+          )}
         </div>
+
       ) : (
         !mutation.isError && (
           <div className="mx-auto max-w-2xl py-16 text-center">
@@ -848,22 +894,60 @@ function HistoryCard({
 
 
 
+const CARD_INTERACTIVE =
+  "cursor-pointer transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lofi-blue)]";
+
+function activeRing(isActive: boolean) {
+  return isActive
+    ? "ring-2 ring-[var(--lofi-blue)] shadow-[0_0_0_5px_oklch(0.7_0.1_230_/_0.18)]"
+    : "";
+}
+
+function cardClickProps(
+  payload: { id: string; label: string; value: string },
+  onOpenChat: (p: ActiveCard) => void,
+) {
+  return {
+    role: "button" as const,
+    tabIndex: 0,
+    "aria-label": `Ask the assistant about ${payload.label}`,
+    onClick: (e: React.MouseEvent<HTMLElement>) =>
+      onOpenChat({ ...payload, anchorEl: e.currentTarget }),
+    onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onOpenChat({ ...payload, anchorEl: e.currentTarget });
+      }
+    },
+  };
+}
+
 function RecommendationCard({
   program,
   recommendation,
+  onOpenChat,
+  activeId,
 }: {
   program: string;
   recommendation: string;
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
 }) {
+  const id = "recommendation";
   return (
     <article
-      className="flex flex-col rounded-xl border-2 p-7 shadow-[var(--lofi-shadow)]"
+      {...cardClickProps(
+        { id, label: "Top Recommendation", value: `${program ? `Program: ${program}\n` : ""}${recommendation}` },
+        onOpenChat,
+      )}
+      className={`flex flex-col rounded-xl border-2 p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
       style={{
         borderColor: "var(--lofi-blue)",
         background:
           "linear-gradient(150deg, var(--lofi-card) 0%, var(--lofi-blue) 220%)",
       }}
     >
+
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
@@ -890,15 +974,21 @@ function RecommendationCard({
 
 
 function ResultCard({
+  id,
   title,
   icon: Icon,
   text,
   accent,
+  onOpenChat,
+  activeId,
 }: {
+  id: string;
   title: string;
   icon: LucideIcon;
   text: string;
   accent: "lavender" | "peach" | "sage" | "blue";
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
 }) {
   const accentVar =
     accent === "lavender"
@@ -910,7 +1000,11 @@ function ResultCard({
           : "var(--lofi-sage)";
 
   return (
-    <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+    <article
+      {...cardClickProps({ id, label: title, value: text }, onOpenChat)}
+      className={`flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
+    >
+
       <div className="mb-3 flex items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
@@ -926,15 +1020,29 @@ function ResultCard({
   );
 }
 
-function DocumentationCard({ documentation }: { documentation: Documentation }) {
+function DocumentationCard({
+  documentation,
+  onOpenChat,
+  activeId,
+}: {
+  documentation: Documentation;
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
+}) {
   const buckets: { title: string; icon: LucideIcon; text: string }[] = [
     { title: "Borrower Tasks", icon: Hand, text: documentation.borrowerTasks },
     { title: "Borrower & LO Collaboration", icon: Handshake, text: documentation.collaboration },
     { title: "LO / Internal Broker Actions", icon: Briefcase, text: documentation.loActions },
   ];
+  const id = "documentation";
+  const value = buckets.map((b) => `${b.title}:\n${b.text}`).join("\n\n");
 
   return (
-    <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+    <article
+      {...cardClickProps({ id, label: "Documentation to Request", value }, onOpenChat)}
+      className={`flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
+    >
+
       <div className="mb-4 flex items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
@@ -972,9 +1080,31 @@ function statusStyle(status: AlternativeProgram["status"]) {
   }
 }
 
-function AlternativesCard({ alternatives }: { alternatives: AlternativeProgram[] }) {
+function AlternativesCard({
+  alternatives,
+  onOpenChat,
+  activeId,
+}: {
+  alternatives: AlternativeProgram[];
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
+}) {
+  const id = "alternatives";
+  const value =
+    alternatives.length === 0
+      ? "No alternative programs evaluated yet."
+      : alternatives
+          .map(
+            (a) =>
+              `${a.program} — ${a.status}\nLTV/CLTV: ${a.ltvCap}\nBenefit: ${a.benefit}\nRisk: ${a.vulnerability}`,
+          )
+          .join("\n\n");
   return (
-    <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+    <article
+      {...cardClickProps({ id, label: "Alternative Loan Programs", value }, onOpenChat)}
+      className={`flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
+    >
+
       <div className="mb-4 flex items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
