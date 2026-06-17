@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import heroHeadphones from "@/assets/anime-headphones-hero.jpg.asset.json";
+import earpieceIcon from "@/assets/anime-earpiece-icon.png.asset.json";
 import coffeeAccent from "@/assets/anime-coffee-accent.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -333,8 +334,8 @@ function StudyCorner() {
       )}
       <header className="mb-10 text-center">
         <img
-          src={heroHeadphones.url}
-          alt="90s anime LOFI headphones"
+          src={earpieceIcon.url}
+          alt="90s anime LOFI headphone earpiece"
           width={96}
           height={96}
           className="mx-auto h-24 w-24 object-contain drop-shadow-[0_8px_20px_oklch(0.4_0.08_56_/_0.35)]"
