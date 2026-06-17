@@ -2,12 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import {
+  Clock, Settings, LogOut, Paperclip, Sparkles, Check, X, ArrowRight,
+  FileText, Diamond, ClipboardList, Construction, BarChart3, BookOpen,
+  Compass, Shuffle, FolderOpen, Briefcase, Hand, Handshake, Headphones,
+  CheckCircle2, Circle, AlertTriangle, Ban,
+} from "lucide-react";
 
 import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import heroHeadphones from "@/assets/anime-headphones-hero.jpg.asset.json";
+import coffeeAccent from "@/assets/anime-coffee-accent.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
