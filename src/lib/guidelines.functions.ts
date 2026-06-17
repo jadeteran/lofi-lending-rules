@@ -251,6 +251,10 @@ Only state a detail if it appears in the provided context; never fabricate names
 
       const parsed = JSON.parse(jsonStr) as Partial<Analysis>;
       const doc = parsed.documentation;
+      const fp = parsed.fileProfile as Partial<FileProfile> | undefined;
+      const recommended =
+        parsed.recommendedProgram?.trim() || (isProgramFinder ? "" : data.loanType);
+      const clean = (v: unknown) => (typeof v === "string" ? v.trim() : "");
       return {
         guidelineRequirements: parsed.guidelineRequirements ?? "No requirements returned.",
         roadblocks: parsed.roadblocks ?? "No roadblocks returned.",
