@@ -564,29 +564,60 @@ function RecentHistory({
       </button>
 
       {open && (
-        <ul className="mt-4 flex flex-col gap-1.5">
+        <ul className="mt-4 flex flex-col gap-2">
           {items.map((item) => {
-            const title =
-              item.rawScenario.trim().replace(/\s+/g, " ").slice(0, 80) ||
+            const fp = item.analysis?.fileProfile;
+            const headline =
+              item.summaryTitle ||
+              fp?.summaryTitle ||
               item.analysis?.recommendedProgram ||
+              item.rawScenario.trim().replace(/\s+/g, " ").slice(0, 70) ||
               "Saved scenario";
+            const fico = item.creditScore || fp?.creditScore || "";
+            const dti = item.dti || fp?.dti || "";
+            const ltv = item.ltv || fp?.ltv || "";
+            const state = item.propertyState || fp?.propertyState || "";
+            const group = item.profileGroup || fp?.profileGroup || "";
+            const badges = [
+              fico && fico !== "—" && { k: "FICO", v: fico },
+              dti && dti !== "—" && { k: "DTI", v: dti },
+              ltv && ltv !== "—" && { k: "LTV", v: ltv },
+              state && state !== "—" && { k: "ST", v: state },
+            ].filter(Boolean) as { k: string; v: string }[];
             return (
               <li key={item.id}>
                 <button
                   type="button"
                   onClick={() => onPick(item)}
-                  className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[var(--lofi-blue)]/15"
+                  className="group flex w-full flex-col gap-2 rounded-xl border border-[var(--lofi-cream-deep)]/60 bg-[var(--lofi-bg)]/40 px-4 py-3 text-left transition hover:border-[var(--lofi-blue)] hover:bg-[var(--lofi-blue)]/10"
                 >
-                  <span className="flex-1 truncate text-sm font-semibold text-[var(--lofi-ink)]">
-                    {title}
-                    {item.rawScenario.length > 80 ? "…" : ""}
-                  </span>
-                  <span className="shrink-0 rounded-full border border-[var(--lofi-cream-deep)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--lofi-blue-deep)]">
-                    {item.selectedProgram || "—"}
-                  </span>
-                  <span className="hidden shrink-0 text-[11px] text-[var(--lofi-muted)] sm:block">
-                    {whenOf(item.updatedAt)}
-                  </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="flex-1 text-sm font-extrabold leading-snug text-[var(--lofi-ink)]">
+                      {headline}
+                    </span>
+                    <span className="hidden shrink-0 text-[11px] text-[var(--lofi-muted)] sm:block">
+                      {whenOf(item.updatedAt)}
+                    </span>
+                  </div>
+                  {badges.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {badges.map((b) => (
+                        <span
+                          key={b.k}
+                          className="inline-flex items-center gap-1 rounded-md border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-2 py-0.5 text-[10px] font-bold text-[var(--lofi-blue-deep)]"
+                        >
+                          <span className="text-[var(--lofi-muted)]">{b.k}</span>
+                          {b.v}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {group && group !== "Unclassified" && (
+                    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lofi-blue)]/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--lofi-blue-deep)]">
+                      <span aria-hidden>◆</span>
+                      {group}
+                    </span>
+                  )}
                 </button>
               </li>
             );

@@ -34,6 +34,15 @@ export type AlternativeProgram = {
   vulnerability: string;
 };
 
+export type FileProfile = {
+  summaryTitle: string;
+  creditScore: string;
+  dti: string;
+  ltv: string;
+  propertyState: string;
+  profileGroup: string;
+};
+
 export type Analysis = {
   guidelineRequirements: string;
   roadblocks: string;
@@ -43,6 +52,7 @@ export type Analysis = {
   citations: string;
   recommendedProgram: string;
   recommendation: string;
+  fileProfile: FileProfile;
 };
 
 const AttachmentSchema = z.object({
@@ -65,6 +75,15 @@ const AlternativeProgramSchema = z.object({
   vulnerability: z.string().default(""),
 });
 
+const FileProfileSchema = z.object({
+  summaryTitle: z.string().default(""),
+  creditScore: z.string().default(""),
+  dti: z.string().default(""),
+  ltv: z.string().default(""),
+  propertyState: z.string().default(""),
+  profileGroup: z.string().default(""),
+});
+
 const PreviousReportSchema = z.object({
   guidelineRequirements: z.string().default(""),
   roadblocks: z.string().default(""),
@@ -78,6 +97,7 @@ const PreviousReportSchema = z.object({
   citations: z.string().default(""),
   recommendedProgram: z.string().default(""),
   recommendation: z.string().default(""),
+  fileProfile: FileProfileSchema.optional(),
 });
 
 const InputSchema = z
@@ -125,7 +145,7 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const groundingNotes = grounding.notes.length ? grounding.notes.join(" ") : "";
 
-    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, citations, recommendedProgram, and recommendation. Do not wrap the response in markdown code blocks like \`\`\`json.
+    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, citations, recommendedProgram, recommendation, and fileProfile. Do not wrap the response in markdown code blocks like \`\`\`json.
 
 ${
       isProgramFinder
@@ -176,6 +196,13 @@ The JSON object must have exactly these keys:
 - "citations": (string) the actual handbook citations and locked-rule references you relied on, as "- " bullet lines. Each bullet should pair a specific claim/number with its source, e.g. "- Max base loan amount $177,570 — per lofi_guidelines FHA Streamline rule" or "- 210-day seasoning requirement — FHA Handbook 4000.1 II.A.8.d (retrieved passage)". Use ONLY the CITATION labels supplied in the GROUNDING SOURCES; if a source was unavailable this run, say so here. Never fabricate section numbers.
 - "recommendedProgram": (string) the single best-fit program name. ${isProgramFinder ? 'In Program Finder mode this is your #1 ranked program.' : `Set this to "${data.loanType}".`}
 - "recommendation": (string) ${isProgramFinder ? 'a summary, as "- " bullet lines, explaining WHY the #1 recommended program wins over the rejected/runner-up alternatives — reference the specific scenario facts and locked rules that make it the best fit and that disqualify or weaken the others (e.g. "- FHA Streamline wins: no appraisal needed and borrower has 0x30 mortgage history, while Conventional R&T is capped by the 95% LTV on the current value").' : 'a brief "- " bullet summary of why this chosen program fits the scenario. If not applicable, set to "- N/A — program was specified by the loan officer.".'}
+- "fileProfile": (object) a structured catalog header extracted from the scenario for clustering and scannability. It must be an object with exactly these six string keys:
+    - "summaryTitle": a crisp, bold headline string tracking the file profile, formatted as "<Program> <Purpose> — <FICO> FICO | <DTI>% DTI | <ST>" (e.g. "FHA Purchase — 620 FICO | 56% DTI | TX"). Use the recommended program and the actual scenario figures; omit a token only if genuinely unknown.
+    - "creditScore": the representative/qualifying FICO credit score as a plain number string (e.g. "620"). If a range, use the qualifying (middle/lower) score. Use "—" if absent.
+    - "dti": the debt-to-income ratio as a percentage string (e.g. "56%"). Use the back-end DTI when available. Use "—" if absent.
+    - "ltv": the loan-to-value (or CLTV) ratio for THIS file as a percentage string (e.g. "96.5%"). Use "—" if absent.
+    - "propertyState": the 2-letter US state abbreviation for the subject property (e.g. "TX"). Use "—" if absent.
+    - "profileGroup": a logical classification tier clustering this file by manufacturing similarity and eligibility. Evaluate the file conditions (program, purpose, FICO bands, DTI, LTV, state, underwriting path) and assign a concise descriptive tier label, e.g. "Texas High-DTI Cash-Out" or "FHA Sub-620 Manual Underwrite". Be consistent so similar files cluster under the same group.
 
 The string values (guidelineRequirements, roadblocks, ltv, citations, recommendation) and each of the three documentation bucket values must be a single string using "- " bullet lines separated by newlines. If a documentation bucket has no items, set it to "- None for this scenario.". Output nothing outside the JSON object.
 
@@ -224,6 +251,10 @@ Only state a detail if it appears in the provided context; never fabricate names
 
       const parsed = JSON.parse(jsonStr) as Partial<Analysis>;
       const doc = parsed.documentation;
+      const fp = parsed.fileProfile as Partial<FileProfile> | undefined;
+      const recommended =
+        parsed.recommendedProgram?.trim() || (isProgramFinder ? "" : data.loanType);
+      const clean = (v: unknown) => (typeof v === "string" ? v.trim() : "");
       return {
         guidelineRequirements: parsed.guidelineRequirements ?? "No requirements returned.",
         roadblocks: parsed.roadblocks ?? "No roadblocks returned.",
@@ -253,14 +284,25 @@ Only state a detail if it appears in the provided context; never fabricate names
           (groundingNotes
             ? `- Grounding sources limited this run: ${groundingNotes}`
             : "- No handbook citations returned for this scenario."),
-        recommendedProgram:
-          parsed.recommendedProgram?.trim() ||
-          (isProgramFinder ? "" : data.loanType),
+        recommendedProgram: recommended,
         recommendation:
           parsed.recommendation?.trim() ||
           (isProgramFinder
             ? "- No program recommendation could be derived from the available data."
             : "- N/A — program was specified by the loan officer."),
+        fileProfile: {
+          summaryTitle:
+            clean(fp?.summaryTitle) ||
+            [recommended || data.loanType, clean(fp?.creditScore) && `${clean(fp?.creditScore)} FICO`, clean(fp?.dti) && `${clean(fp?.dti)} DTI`, clean(fp?.propertyState)]
+              .filter(Boolean)
+              .join(" · ") ||
+            "Saved scenario",
+          creditScore: clean(fp?.creditScore) || "—",
+          dti: clean(fp?.dti) || "—",
+          ltv: clean(fp?.ltv) || "—",
+          propertyState: clean(fp?.propertyState) || "—",
+          profileGroup: clean(fp?.profileGroup) || "Unclassified",
+        },
       };
     } catch (err) {
       const e = err as { statusCode?: number; message?: string };
