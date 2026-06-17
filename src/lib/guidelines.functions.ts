@@ -21,10 +21,21 @@ export type Documentation = {
   loActions: string;
 };
 
+export type AlternativeStatus = "Eligible" | "Likely Eligible" | "High Risk" | "Ineligible";
+
+export type AlternativeProgram = {
+  program: string;
+  status: AlternativeStatus;
+  ltvCap: string;
+  benefit: string;
+  vulnerability: string;
+};
+
 export type Analysis = {
   guidelineRequirements: string;
   roadblocks: string;
   ltv: string;
+  alternatives: AlternativeProgram[];
   documentation: Documentation;
 };
 
@@ -40,10 +51,19 @@ const DocumentationSchema = z.object({
   loActions: z.string().default(""),
 });
 
+const AlternativeProgramSchema = z.object({
+  program: z.string().default(""),
+  status: z.string().default(""),
+  ltvCap: z.string().default(""),
+  benefit: z.string().default(""),
+  vulnerability: z.string().default(""),
+});
+
 const PreviousReportSchema = z.object({
   guidelineRequirements: z.string().default(""),
   roadblocks: z.string().default(""),
   ltv: z.string().default(""),
+  alternatives: z.array(AlternativeProgramSchema).default([]),
   documentation: DocumentationSchema.default({
     borrowerTasks: "",
     collaboration: "",
@@ -73,7 +93,7 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const isOverride = data.mode === "override" && !!data.previousReport;
 
-    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, and documentation. Do not wrap the response in markdown code blocks like \`\`\`json.
+    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, and documentation. Do not wrap the response in markdown code blocks like \`\`\`json.
 
 You specialize in the "${data.loanType}" loan program. ${
       isOverride
@@ -85,6 +105,13 @@ The JSON object must have exactly these keys:
 - "guidelineRequirements": (string) standard guideline requirements for this program and scenario.
 - "roadblocks": (string) potential roadblocks, red flags, or reasons this could get denied.
 - "ltv": (string) maximum allowable LTV / CLTV thresholds and an eligibility read for this exact scenario.
+- "alternatives": (array) compare this file against the main alternative loan programs the borrower might fall back to (e.g. FHA Streamline, FHA Simple Refinance, FHA Rate & Term, Conventional Rate & Term Fannie/Freddie, VA IRRRL, etc. — pick the ones actually relevant to this scenario and current program). Return an array of objects, each with exactly these string keys:
+    - "program": the alternative program name.
+    - "status": one of exactly "Eligible", "Likely Eligible", "High Risk", or "Ineligible" based on the scenario data.
+    - "ltvCap": the maximum allowable LTV / CLTV cap for that alternative program (e.g. "97.75% LTV / 100% with secondary financing").
+    - "benefit": the main program variance or structural benefit of switching to it (e.g. drops the appraisal requirement, allows closing costs rolled in, no income docs).
+    - "vulnerability": the Vulnerability Risk Factor. For any program marked "Ineligible" or "High Risk", explicitly explain why the loan is vulnerable under those guidelines (e.g. specific 30-day mortgage lates disqualifying a standard FHA/Conventional refi, tight DTI overlays, appraisal shortfalls capping LTV). For Eligible programs, set this to "- No material risk flagged.".
+  Return 3–5 relevant programs. Base every status and cap strictly on the scenario data; never fabricate facts.
 - "documentation": (object) the documents to request, split into operational buckets for the Loan Officer. It must be an object with exactly these three string keys:
     - "borrowerTasks": items ONLY the borrower must produce or provide (e.g. their own bank statements, paystubs, letters of explanation).
     - "collaboration": items the borrower must help obtain or sign together with the LO (e.g. signing the final URLA/HUD forms, subordination agreements, updated HOI declarations needing the borrower's insurer).
@@ -141,6 +168,21 @@ Only state a detail if it appears in the provided context; never fabricate names
         guidelineRequirements: parsed.guidelineRequirements ?? "No requirements returned.",
         roadblocks: parsed.roadblocks ?? "No roadblocks returned.",
         ltv: parsed.ltv ?? "No LTV thresholds returned.",
+        alternatives: Array.isArray(parsed.alternatives)
+          ? parsed.alternatives.map((a) => {
+              const allowed: AlternativeStatus[] = ["Eligible", "Likely Eligible", "High Risk", "Ineligible"];
+              const status = allowed.includes(a?.status as AlternativeStatus)
+                ? (a!.status as AlternativeStatus)
+                : "High Risk";
+              return {
+                program: a?.program?.trim() || "Unnamed program",
+                status,
+                ltvCap: a?.ltvCap?.trim() || "—",
+                benefit: a?.benefit?.trim() || "—",
+                vulnerability: a?.vulnerability?.trim() || "- No material risk flagged.",
+              };
+            })
+          : [],
         documentation: {
           borrowerTasks: doc?.borrowerTasks?.trim() || "- None for this scenario.",
           collaboration: doc?.collaboration?.trim() || "- None for this scenario.",
