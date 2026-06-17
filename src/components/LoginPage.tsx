@@ -52,7 +52,12 @@ export function LoginPage() {
           }}
         >
           <div className="mb-8 text-center">
-            <p className="text-3xl">🎧</p>
+            <img
+              src={workspaceAsset.url}
+              alt=""
+              aria-hidden
+              className="mx-auto mb-1 h-12 w-12 rounded-full object-cover shadow-[var(--lofi-shadow)]"
+            />
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--lofi-blue-deep)]">
               Welcome back
             </h1>
