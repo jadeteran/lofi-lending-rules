@@ -34,14 +34,16 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const gateway = createLovableAiGatewayProvider(key);
 
-    const system = `You are a senior mortgage underwriting assistant specializing in the "${data.loanType}" loan program. Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance. Be concrete and practical.
+    const system = `You are a senior mortgage underwriting assistant. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, and documentation. Do not wrap the response in markdown code blocks like \`\`\`json.
 
-Respond with ONLY a valid JSON object (no markdown fences, no extra text) with exactly these string keys:
+You specialize in the "${data.loanType}" loan program. Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance. Be concrete and practical.
+
+The JSON object must have exactly these string keys:
 - "guidelineRequirements": standard guideline requirements for this program and scenario.
 - "roadblocks": potential roadblocks, red flags, or reasons this could get denied.
 - "documentation": exact documentation to request from the borrower to clear this.
 
-Each value should be a single string using "- " bullet lines separated by newlines.`;
+Each value must be a single string using "- " bullet lines separated by newlines. Output nothing outside the JSON object.`;
 
     try {
       const { text } = await generateText({
