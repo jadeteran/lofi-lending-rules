@@ -974,15 +974,21 @@ function RecommendationCard({
 
 
 function ResultCard({
+  id,
   title,
   icon: Icon,
   text,
   accent,
+  onOpenChat,
+  activeId,
 }: {
+  id: string;
   title: string;
   icon: LucideIcon;
   text: string;
   accent: "lavender" | "peach" | "sage" | "blue";
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
 }) {
   const accentVar =
     accent === "lavender"
@@ -994,7 +1000,11 @@ function ResultCard({
           : "var(--lofi-sage)";
 
   return (
-    <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+    <article
+      {...cardClickProps({ id, label: title, value: text }, onOpenChat)}
+      className={`flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
+    >
+
       <div className="mb-3 flex items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
