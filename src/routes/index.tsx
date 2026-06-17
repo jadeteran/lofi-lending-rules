@@ -8,7 +8,6 @@ import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.f
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import workspaceAsset from "@/assets/lofi-workspace.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,7 +48,7 @@ function AuthGate() {
           background:
             "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
           color: "var(--lofi-muted)",
-          fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+  
         }}
       >
         <p className="animate-pulse text-sm">🎧 Tuning in…</p>
@@ -66,7 +65,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div
       className="min-h-screen"
       style={{
-        fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+
         background:
           "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
         color: "var(--lofi-ink)",
@@ -318,7 +317,7 @@ function StudyCorner() {
 
         <h1
           className="mt-2 text-4xl font-bold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl"
-          style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
+          
         >
           AI Guideline Assistant
         </h1>
@@ -413,7 +412,7 @@ function StudyCorner() {
             Paste images/text or upload JPEG, PNG, PDF · up to 6 files
           </span>
 
-          <div className="flex items-center gap-3" style={{ fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif" }}>
+          <div className="flex items-center gap-3">
             {(hasVersions || scenario.trim() !== "" || attachments.length > 0 || loanType !== "") && (
               <button
                 type="button"
