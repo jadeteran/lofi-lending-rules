@@ -337,6 +337,9 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                 : "Drag & drop files here, or click to browse. PDF, TXT, MD, CSV."}
             </p>
           </button>
+          <p className="mt-2 text-xs text-[var(--lofi-muted)]">
+            Re-uploading a file with the same name replaces its previous version, so newer guidance always overrides conflicting older info.
+          </p>
           {uploadDone && (
             <p className="mt-2 text-xs font-semibold text-[var(--lofi-blue-deep)]">{uploadDone}</p>
           )}
