@@ -56,6 +56,12 @@ export const listScenarios = createServerFn({ method: "GET" }).handler(
           selectedProgram: r.selectedProgram,
           analysis: r.analysis as Analysis,
           updatedAt: r.updatedAt,
+          summaryTitle: r.summaryTitle,
+          creditScore: r.creditScore,
+          dti: r.dti,
+          ltv: r.ltv,
+          propertyState: r.propertyState,
+          profileGroup: r.profileGroup,
         }));
     } catch {
       return [];
