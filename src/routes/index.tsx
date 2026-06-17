@@ -320,6 +320,14 @@ function StudyCorner() {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
+              {current.report.recommendation &&
+                current.report.recommendation.trim() !==
+                  "- N/A — program was specified by the loan officer." && (
+                  <RecommendationCard
+                    program={current.report.recommendedProgram}
+                    recommendation={current.report.recommendation}
+                  />
+                )}
               <ResultCard title="Guideline Requirements" emoji="📋" text={current.report.guidelineRequirements} accent="lavender" />
               <ResultCard title="Potential Roadblocks" emoji="🚧" text={current.report.roadblocks} accent="peach" />
               <ResultCard title="LTV / Eligibility" emoji="📊" text={current.report.ltv} accent="blue" />
