@@ -1,48 +1,57 @@
-# Split "Documentation to Request" into operational buckets
+# Authentication Gate + Admin User Management
 
-Right now the report's fourth card shows a single flat list of documents. We'll restructure it so the Loan Officer sees the same items grouped into three clear action lanes, both in the AI output and in the on-screen card.
+Lock the whole workspace behind a login wall, persist sessions across refreshes, and give the admin a Settings panel (gear icon, top-right) to manage users and roles. Team logins are created from that panel — there is no separate team password to provide up front.
 
-## The three buckets
+## How auth works in this project
 
-1. **Borrower Tasks** — things only the borrower must produce/provide.
-2. **Borrower & LO Collaboration** — items the borrower must help obtain or sign, coordinated with the LO.
-3. **LO / Internal Broker Actions** — work the LO/broker handles internally.
+This app uses a **custom Supabase setup** (server-only secrets `LOFI_SUPABASE_URL` / `LOFI_SUPABASE_ANON_KEY`), not the standard Lovable Cloud integration. There is currently no browser-side Supabase client. Two things are needed to support login + user management:
 
-Using the sample loan file, the items map like this (the AI will do this dynamically per scenario; this is the reference behavior):
+1. The browser needs the Supabase URL + anon key to run `signInWithPassword()` and persist the session. These are publishable values, exposed safely via a small server function.
+2. Creating / editing / deleting users requires the **Supabase service-role key**, which is not yet configured. A new secret `LOFI_SUPABASE_SERVICE_ROLE_KEY` must be added (I'll request it during the build).
 
-```text
-1) Borrower Tasks
-   - Complete bank statements (all pages) covering finalized cash-to-close
+## What gets built
 
-2) Borrower & LO Collaboration
-   - Updated HOI Declarations Page + Invoice (correct loss payee, address/zip)
-   - Executed Subordination Agreement for the HELOC (Schedule B, Item #6)
-   - Fully executed Final URLA (1003) and Form HUD-92900-A
+### 1. Browser auth client + config
 
-3) LO / Internal Broker Actions
-   - Revised FHA Streamline Worksheet (base loan amount ≤ $177,570)
-   - Evidence of rate lock confirmation
-```
+- New `src/lib/auth.functions.ts` with `getPublicAuthConfig()` returning `{ url, anonKey }` from server env.
+- New `src/lib/supabase-browser.ts` — lazily creates a singleton browser Supabase client (`persistSession: true`, `autoRefreshToken: true`) once the config is fetched.
 
-## Backend — `src/lib/guidelines.functions.ts`
+### 2. Auth provider + route guard
 
-- Change the `Analysis` type so `documentation` is a structured object instead of a string:
-  - `documentation: { borrowerTasks: string; collaboration: string; loActions: string }`
-- Update `PreviousReportSchema` to match the new shape (so re-evaluation/override passes the structured doc buckets back in).
-- Update the system prompt's `documentation` instruction to require a JSON object with exactly those three keys, each a `"- "` bulleted string. Add guidance defining each bucket:
-  - borrowerTasks = items only the borrower provides
-  - collaboration = items the borrower must help obtain or sign, jointly with the LO
-  - loActions = internal LO/broker actions
-- Update the response normalization/fallbacks to return the three keys (defaulting each to a "none" line).
+- New `src/components/AuthProvider.tsx`: fetches config, creates the client, reads the current session, and subscribes to `onAuthStateChange` for clean persistence across refreshes. Exposes `{ session, user, role, signIn, signOut, loading }` via context.
+- `role` is read from `user.user_metadata.role` (`'admin'` or `'team'`).
+- Wrap the workspace: while loading, show a calm lofi spinner; if no session, render the **Login Page**; if authenticated, render the workspace.
 
-## Frontend — `src/routes/index.tsx`
+### 3. Login Page (lofi retro styling)
 
-- Update the `documentation` rendering: replace the single `ResultCard` for documentation with one card that shows three labeled sub-sections (Borrower Tasks / Borrower & LO Collaboration / LO & Internal Actions), each rendering its bulleted string. Keep the existing `sage` accent and lofi styling.
-- The other three cards (Guidelines, Roadblocks, LTV) stay unchanged.
-- Versioning, timeline, and override flow keep working since they just pass `report` through.
+- A centered glassmorphism card matching the warm amber/cream palette: email + password inputs, warm amber focus rings, a "Sign in" button, inline error on bad credentials, and the lofi gradient background.
+
+### 4. Role-based workspace
+
+- `role === 'admin'`: full workspace + Recent History + a **gear icon** (top-right) opening the admin **Settings panel**.
+- `role === 'team'`: full workspace + Recent History, but **no gear icon / no Settings access**.
+
+### 5. Settings panel (admin only) — gear icon, top-right
+
+An overlay panel (kept in-app rather than a separate URL since auth is client-side) with:
+
+- **Users & Roles**: list existing users, create a user (email, password, role = admin/team), edit a user's role or reset password, and delete a user. All backed by service-role server functions that first verify the caller is an authenticated admin.
+- **Admin Config (handbook upload)**: a clearly-labeled "coming soon" section reserved for uploading handbook guidelines, per the original request.
+
+### 6. Seed the admin account
+
+- A one-time guarded server function creates `jadeteran@gmail.com` (password `Peachie27!`, `user_metadata.role = 'admin'`, email pre-confirmed) if it doesn't already exist, so you can log in immediately.
 
 ## Technical notes
 
-- This changes the JSON contract between the model and UI; both files must ship together so the structured `documentation` object renders correctly.
-- No database/persistence changes — versions remain in component state.
-- Styling stays on existing lofi tokens; only new sub-section structure inside the documentation card.
+- `src/lib/auth.server.ts`: service-role client + a `verifyAdminCaller(accessToken)` helper. Every admin server function (list/create/update/delete users) receives the caller's access token, validates it with `auth.getUser(token)`, and rejects non-admins — these are public endpoints on the published site, so the role check is mandatory.
+- Admin user operations use the Supabase Auth Admin API (`auth.admin.listUsers / createUser / updateUserById / deleteUserById`).
+- Session lives in `localStorage` via the browser client; a single `onAuthStateChange` listener keeps React state in sync on refresh and across tabs.
+- Requires adding the `LOFI_SUPABASE_SERVICE_ROLE_KEY` secret (requested during build).
+
+## Files
+
+- Add: `src/lib/auth.functions.ts`, `src/lib/auth.server.ts`, `src/lib/supabase-browser.ts`, `src/components/AuthProvider.tsx`, `src/components/LoginPage.tsx`, `src/components/SettingsPanel.tsx`
+- Edit: `src/routes/index.tsx` (wrap in auth gate, add gear icon + role gating)  
+  
+add sign out feature and put the sign out button to the right of the gear icon
