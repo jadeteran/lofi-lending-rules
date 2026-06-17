@@ -685,7 +685,7 @@ function HistoryDrawer({
       <div
         onClick={onClose}
         aria-hidden={!open}
-        className={`fixed inset-0 z-40 bg-[var(--lofi-blue-deep)]/30 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-[oklch(0.28_0.05_60_/_0.45)] backdrop-blur-sm transition-opacity duration-300 ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
