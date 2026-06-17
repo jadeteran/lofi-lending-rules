@@ -4,7 +4,10 @@ import { generateText } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 
+export const PROGRAM_FINDER = "Unsure / Program Finder" as const;
+
 export const LOAN_TYPES = [
+  PROGRAM_FINDER,
   "Conventional - Fannie Mae",
   "Conventional - Freddie Mac",
   "Government - FHA",
