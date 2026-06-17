@@ -76,10 +76,16 @@ function StudyCorner() {
   const [showTimeline, setShowTimeline] = useState(true);
   const [showHistory, setShowHistory] = useState(true);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [lastProgram, setLastProgram] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(1);
 
   const hasVersions = versions.length > 0;
+  // Once a report exists, any new context or a changed program means there's
+  // pending work to recalculate.
+  const isDirty =
+    hasVersions &&
+    (scenario.trim() !== "" || attachments.length > 0 || loanType !== lastProgram);
 
   const historyQuery = useQuery({
     queryKey: ["scenario-history"],
