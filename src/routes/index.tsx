@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-import { analyzeScenario, LOAN_TYPES, type Analysis } from "@/lib/guidelines.functions";
+import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation } from "@/lib/guidelines.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -324,7 +324,7 @@ function StudyCorner() {
               <ResultCard title="Guideline Requirements" emoji="📋" text={current.report.guidelineRequirements} accent="lavender" />
               <ResultCard title="Potential Roadblocks" emoji="🚧" text={current.report.roadblocks} accent="peach" />
               <ResultCard title="LTV / Eligibility" emoji="📊" text={current.report.ltv} accent="blue" />
-              <DocumentationCard documentation={current.report.documentation} />>
+              <DocumentationCard documentation={current.report.documentation} />
             </div>
           </section>
 
