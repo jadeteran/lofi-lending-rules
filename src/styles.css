@@ -192,6 +192,13 @@
   }
 }
 
+@keyframes lofiFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+
+
 .report-md h2 {
   font-size: 1.05rem;
   font-weight: 600;
