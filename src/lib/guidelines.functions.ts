@@ -18,6 +18,7 @@ export const LOAN_TYPES = [
 export type Analysis = {
   guidelineRequirements: string;
   roadblocks: string;
+  ltv: string;
   documentation: string;
 };
 
@@ -27,11 +28,20 @@ const AttachmentSchema = z.object({
   dataUrl: z.string().min(1),
 });
 
+const PreviousReportSchema = z.object({
+  guidelineRequirements: z.string().default(""),
+  roadblocks: z.string().default(""),
+  ltv: z.string().default(""),
+  documentation: z.string().default(""),
+});
+
 const InputSchema = z
   .object({
     loanType: z.string().min(1),
     scenario: z.string().default(""),
     attachments: z.array(AttachmentSchema).max(6).default([]),
+    mode: z.enum(["initial", "override"]).default("initial"),
+    previousReport: PreviousReportSchema.optional(),
   })
   .refine((d) => d.scenario.trim() !== "" || d.attachments.length > 0, {
     message: "Add a scenario or attach a file.",
