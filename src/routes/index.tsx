@@ -1,52 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 
-import {
-  getGuidelines,
-  LOAN_TYPES,
-  type Guideline,
-} from "@/lib/guidelines.functions";
-
-const guidelinesQuery = queryOptions({
-  queryKey: ["lofi-guidelines"],
-  queryFn: () => getGuidelines(),
-  staleTime: 30_000,
-});
+import { analyzeScenario, LOAN_TYPES } from "@/lib/guidelines.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cozy Guideline Study Corner — Lofi Lending" },
+      { title: "AI Guideline Assistant — Lofi Lending" },
       {
         name: "description",
         content:
-          "A calm study corner to search and filter mortgage guidelines by loan type. Relax, sip your coffee, and find your stips.",
+          "A calm AI study corner for loan officers. Drop in a tough stip or loan scenario and get instant guideline requirements, roadblocks, and the docs to request.",
       },
-      { property: "og:title", content: "Cozy Guideline Study Corner" },
+      { property: "og:title", content: "AI Guideline Assistant" },
       {
         property: "og:description",
-        content: "Search and filter lending guidelines in a relaxed lofi study space.",
+        content:
+          "Analyze loan scenarios instantly with an AI underwriting assistant in a relaxed lofi study space.",
       },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(guidelinesQuery),
   component: StudyCorner,
-  errorComponent: ({ error }) => (
-    <Shell>
-      <div className="rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-10 text-center shadow-[var(--lofi-shadow)]">
-        <p className="text-lg font-bold text-[var(--lofi-blue-deep)]">
-          The record skipped a beat 🎧
-        </p>
-        <p className="mt-2 text-sm text-[var(--lofi-muted)]">{error.message}</p>
-      </div>
-    </Shell>
-  ),
-  notFoundComponent: () => (
-    <Shell>
-      <p className="text-center text-[var(--lofi-muted)]">Nothing here yet.</p>
-    </Shell>
-  ),
 });
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -66,108 +42,131 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 function StudyCorner() {
-  const { data: guidelines } = useSuspenseQuery(guidelinesQuery);
-  const [search, setSearch] = useState("");
+  const analyze = useServerFn(analyzeScenario);
   const [loanType, setLoanType] = useState("");
+  const [scenario, setScenario] = useState("");
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return guidelines.filter((g) => {
-      if (loanType && g.loan_type !== loanType) return false;
-      if (!q) return true;
-      const haystack = `${g.rule_name ?? ""} ${g.guideline_text ?? ""}`.toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [guidelines, search, loanType]);
+  const mutation = useMutation({
+    mutationFn: (vars: { loanType: string; scenario: string }) =>
+      analyze({ data: vars }),
+  });
+
+  const canSubmit = loanType.trim() !== "" && scenario.trim() !== "" && !mutation.isPending;
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    mutation.mutate({ loanType, scenario: scenario.trim() });
+  }
+
+  const result = mutation.data;
 
   return (
     <Shell>
       <header className="mb-10 text-center">
         <p className="text-3xl">🎧</p>
         <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl">
-          Cozy Guideline Study Corner
+          AI Guideline Assistant
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-[var(--lofi-muted)]">
-          Take a breath, queue the lofi beats, and gently sift through your lending
-          guidelines. Everything here is pulled live and verified.
+          Queue the lofi beats, pick a loan program, and drop in a real-world scenario
+          or a tough underwriter stip. The assistant maps the guideline requirements,
+          roadblocks, and exactly what to request from your borrower.
         </p>
       </header>
 
-      <div className="mb-10 flex flex-col gap-4 sm:flex-row">
-        <div className="relative flex-1">
-          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--lofi-muted)]">
-            🔍
-          </span>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search rule names and guideline text…"
-            className="w-full rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] py-3.5 pl-11 pr-4 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)] placeholder:font-normal placeholder:text-[var(--lofi-muted)]"
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="mb-10 flex flex-col gap-4">
         <select
           value={loanType}
           onChange={(e) => setLoanType(e.target.value)}
-          className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)] sm:w-72"
+          className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]"
         >
-          <option value="">All loan types</option>
+          <option value="">Select a loan program…</option>
           {LOAN_TYPES.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>
           ))}
         </select>
-      </div>
 
-      {filtered.length === 0 ? (
+        <textarea
+          value={scenario}
+          onChange={(e) => setScenario(e.target.value)}
+          rows={5}
+          placeholder="Paste a tough stip or describe the loan scenario… e.g. 'Borrower is self-employed with declining income year over year and underwriter wants P&L support.'"
+          className="w-full resize-y rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold leading-relaxed text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)] placeholder:font-normal placeholder:text-[var(--lofi-muted)]"
+        />
+
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="self-end rounded-2xl bg-[var(--lofi-blue-deep)] px-7 py-3.5 text-sm font-extrabold text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+        >
+          {mutation.isPending ? "Analyzing the track…" : "Analyze scenario"}
+        </button>
+      </form>
+
+      {mutation.isError ? (
+        <div className="rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-10 text-center shadow-[var(--lofi-shadow)]">
+          <p className="text-lg font-bold text-[var(--lofi-blue-deep)]">
+            The record skipped a beat 🎧
+          </p>
+          <p className="mt-2 text-sm text-[var(--lofi-muted)]">
+            {(mutation.error as Error).message}
+          </p>
+        </div>
+      ) : result ? (
+        <div className="grid grid-cols-1 gap-6">
+          <ResultCard title="Guideline Requirements" emoji="📋" text={result.guidelineRequirements} accent="lavender" />
+          <ResultCard title="Potential Roadblocks" emoji="🚧" text={result.roadblocks} accent="peach" />
+          <ResultCard title="Documentation to Request" emoji="📂" text={result.documentation} accent="sage" />
+        </div>
+      ) : (
         <div className="rounded-3xl border border-dashed border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/70 px-8 py-16 text-center">
           <p className="text-3xl">☕</p>
           <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
-            No stips found... keep sipping your coffee.
+            Queue the beats and drop a scenario to analyze…
           </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {filtered.map((g) => (
-            <GuidelineCard key={g.id} guideline={g} />
-          ))}
         </div>
       )}
 
       <footer className="mt-14 text-center text-xs text-[var(--lofi-muted)]">
-        {filtered.length} of {guidelines.length} guidelines · stay cozy ✨
+        AI-generated guidance — always verify against your investor overlays · stay cozy ✨
       </footer>
     </Shell>
   );
 }
 
-function GuidelineCard({ guideline }: { guideline: Guideline }) {
+function ResultCard({
+  title,
+  emoji,
+  text,
+  accent,
+}: {
+  title: string;
+  emoji: string;
+  text: string;
+  accent: "lavender" | "peach" | "sage";
+}) {
+  const accentVar =
+    accent === "lavender"
+      ? "var(--lofi-lavender)"
+      : accent === "peach"
+        ? "var(--lofi-peach)"
+        : "var(--lofi-sage)";
+
   return (
-    <article className="flex flex-col rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        {guideline.loan_type && (
-          <span className="rounded-full bg-[var(--lofi-lavender)] px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]">
-            {guideline.loan_type}
-          </span>
-        )}
-        {guideline.category && (
-          <span className="rounded-full bg-[var(--lofi-peach)] px-3 py-1 text-xs font-semibold text-[var(--lofi-ink)]">
-            {guideline.category}
-          </span>
-        )}
+    <article className="flex flex-col rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          style={{ backgroundColor: accentVar }}
+        >
+          {emoji} {title}
+        </span>
       </div>
-
-      <h2 className="text-lg font-extrabold leading-snug text-[var(--lofi-blue-deep)]">
-        {guideline.rule_name ?? "Untitled rule"}
-      </h2>
-
-      <p className="mt-3 flex-1 whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
-        {guideline.guideline_text ?? "No guideline text provided."}
-      </p>
-
-      <p className="mt-6 border-t border-[var(--lofi-cream-deep)] pt-3 text-[0.7rem] font-medium italic text-[var(--lofi-muted)]">
-        Source Track Checked: ID #{guideline.id}
+      <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+        {text}
       </p>
     </article>
   );

@@ -1,13 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { generateText } from "ai";
+import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
-export type Guideline = {
-  id: number | string;
-  loan_type: string | null;
-  category: string | null;
-  rule_name: string | null;
-  guideline_text: string | null;
-};
 
 export const LOAN_TYPES = [
   "Conventional - Fannie Mae",
@@ -20,28 +15,60 @@ export const LOAN_TYPES = [
   "Private Money / Hard Money",
 ] as const;
 
-export const getGuidelines = createServerFn({ method: "GET" }).handler(
-  async (): Promise<Guideline[]> => {
-    const url = process.env.LOFI_SUPABASE_URL;
-    const key = process.env.LOFI_SUPABASE_ANON_KEY;
-    if (!url || !key) {
-      throw new Error("Supabase connection is not configured.");
+export type Analysis = {
+  guidelineRequirements: string;
+  roadblocks: string;
+  documentation: string;
+};
+
+const InputSchema = z.object({
+  loanType: z.string().min(1),
+  scenario: z.string().min(1),
+});
+
+export const analyzeScenario = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => InputSchema.parse(data))
+  .handler(async ({ data }): Promise<Analysis> => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("AI is not configured. Missing LOVABLE_API_KEY.");
+
+    const gateway = createLovableAiGatewayProvider(key);
+
+    const system = `You are a senior mortgage underwriting assistant specializing in the "${data.loanType}" loan program. Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance. Be concrete and practical.
+
+Respond with ONLY a valid JSON object (no markdown fences, no extra text) with exactly these string keys:
+- "guidelineRequirements": standard guideline requirements for this program and scenario.
+- "roadblocks": potential roadblocks, red flags, or reasons this could get denied.
+- "documentation": exact documentation to request from the borrower to clear this.
+
+Each value should be a single string using "- " bullet lines separated by newlines.`;
+
+    try {
+      const { text } = await generateText({
+        model: gateway("google/gemini-3-flash-preview"),
+        system,
+        prompt: `Loan Program: ${data.loanType}\n\nScenario / Stipulation:\n${data.scenario}`,
+      });
+
+      const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+      const start = cleaned.indexOf("{");
+      const end = cleaned.lastIndexOf("}");
+      const jsonStr = start !== -1 && end !== -1 ? cleaned.slice(start, end + 1) : cleaned;
+
+      const parsed = JSON.parse(jsonStr) as Partial<Analysis>;
+      return {
+        guidelineRequirements: parsed.guidelineRequirements ?? "No requirements returned.",
+        roadblocks: parsed.roadblocks ?? "No roadblocks returned.",
+        documentation: parsed.documentation ?? "No documentation returned.",
+      };
+    } catch (err) {
+      const e = err as { statusCode?: number; message?: string };
+      if (e?.statusCode === 429) {
+        throw new Error("The studio is busy — too many requests. Take a sip and try again shortly.");
+      }
+      if (e?.statusCode === 402) {
+        throw new Error("AI credits are exhausted. Add credits in Settings → Workspace → Usage.");
+      }
+      throw new Error(e?.message || "Failed to analyze the scenario.");
     }
-
-    const supabase = createClient(url, key, {
-      auth: {
-        storage: undefined,
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
-
-    const { data, error } = await supabase
-      .from("lofi_guidelines")
-      .select("id, loan_type, category, rule_name, guideline_text")
-      .order("id", { ascending: true });
-
-    if (error) throw new Error(error.message);
-    return (data ?? []) as Guideline[];
-  },
-);
+  });
