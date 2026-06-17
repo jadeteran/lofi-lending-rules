@@ -600,113 +600,217 @@ function StudyCorner() {
   );
 }
 
-function RecentHistory({
+function whenOf(iso: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function num(v: string | undefined) {
+  if (!v) return null;
+  const n = parseInt(String(v).replace(/[^\d]/g, ""), 10);
+  return Number.isNaN(n) ? null : n;
+}
+
+/** Lightweight client-side similarity score between an active profile and a saved item. */
+function similarityScore(active: FileProfile, item: HistoryItem) {
+  const fp = item.analysis?.fileProfile;
+  const group = item.profileGroup || fp?.profileGroup || "";
+  const state = item.propertyState || fp?.propertyState || "";
+  const fico = num(item.creditScore || fp?.creditScore);
+  const dti = num(item.dti || fp?.dti);
+
+  let score = 0;
+  if (group && group !== "Unclassified" && group === active.profileGroup) score += 5;
+  if (state && state !== "—" && state === active.propertyState) score += 2;
+
+  const aFico = num(active.creditScore);
+  if (fico !== null && aFico !== null && Math.abs(fico - aFico) <= 20) score += 2;
+
+  const aDti = num(active.dti);
+  if (dti !== null && aDti !== null && Math.abs(dti - aDti) <= 5) score += 2;
+
+  return score;
+}
+
+function HistoryDrawer({
   items,
   open,
-  onToggle,
+  activeProfile,
+  onClose,
   onPick,
 }: {
   items: HistoryItem[];
   open: boolean;
-  onToggle: () => void;
+  activeProfile: FileProfile | null;
+  onClose: () => void;
   onPick: (item: HistoryItem) => void;
 }) {
-  if (items.length === 0) return null;
+  const similar = activeProfile
+    ? items
+        .map((item) => ({ item, score: similarityScore(activeProfile, item) }))
+        .filter((s) => s.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5)
+        .map((s) => s.item)
+    : [];
 
-  function whenOf(iso: string) {
-    if (!iso) return "";
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleString([], {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
+  const similarIds = new Set(similar.map((i) => i.id));
+  const rest = items.filter((i) => !similarIds.has(i.id));
 
   return (
-    <section className="mb-10 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-5 shadow-[var(--lofi-shadow)]">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between text-left"
-      >
-        <h3 className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
-          🕑 Recent History
-          <span className="rounded-full bg-[var(--lofi-blue)] px-2 py-0.5 text-[10px] text-[var(--lofi-blue-deep)]">
-            {items.length}
-          </span>
-        </h3>
-        <span className="text-xs font-bold text-[var(--lofi-muted)]">
-          {open ? "Hide" : "Show"}
-        </span>
-      </button>
+    <>
+      {/* Dim click-dismiss overlay */}
+      <div
+        onClick={onClose}
+        aria-hidden={!open}
+        className={`fixed inset-0 z-40 bg-[var(--lofi-blue-deep)]/30 backdrop-blur-sm transition-opacity duration-300 ${
+          open ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
 
-      {open && (
-        <ul className="mt-4 flex flex-col gap-2">
-          {items.map((item) => {
-            const fp = item.analysis?.fileProfile;
-            const headline =
-              item.summaryTitle ||
-              fp?.summaryTitle ||
-              item.analysis?.recommendedProgram ||
-              item.rawScenario.trim().replace(/\s+/g, " ").slice(0, 70) ||
-              "Saved scenario";
-            const fico = item.creditScore || fp?.creditScore || "";
-            const dti = item.dti || fp?.dti || "";
-            const ltv = item.ltv || fp?.ltv || "";
-            const state = item.propertyState || fp?.propertyState || "";
-            const group = item.profileGroup || fp?.profileGroup || "";
-            const badges = [
-              fico && fico !== "—" && { k: "FICO", v: fico },
-              dti && dti !== "—" && { k: "DTI", v: dti },
-              ltv && ltv !== "—" && { k: "LTV", v: ltv },
-              state && state !== "—" && { k: "ST", v: state },
-            ].filter(Boolean) as { k: string; v: string }[];
-            return (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => onPick(item)}
-                  className="group flex w-full flex-col gap-2 rounded-xl border border-[var(--lofi-cream-deep)]/60 bg-[var(--lofi-bg)]/40 px-4 py-3 text-left transition hover:border-[var(--lofi-blue)] hover:bg-[var(--lofi-blue)]/10"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="flex-1 text-sm font-extrabold leading-snug text-[var(--lofi-ink)]">
-                      {headline}
-                    </span>
-                    <span className="hidden shrink-0 text-[11px] text-[var(--lofi-muted)] sm:block">
-                      {whenOf(item.updatedAt)}
-                    </span>
-                  </div>
-                  {badges.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {badges.map((b) => (
-                        <span
-                          key={b.k}
-                          className="inline-flex items-center gap-1 rounded-md border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-2 py-0.5 text-[10px] font-bold text-[var(--lofi-blue-deep)]"
-                        >
-                          <span className="text-[var(--lofi-muted)]">{b.k}</span>
-                          {b.v}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {group && group !== "Unclassified" && (
-                    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lofi-blue)]/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--lofi-blue-deep)]">
-                      <span aria-hidden>◆</span>
-                      {group}
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
+      {/* Left drawer */}
+      <aside
+        role="dialog"
+        aria-label="Previous scenarios"
+        className={`fixed inset-y-0 left-0 z-50 flex w-full flex-col border-r border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/95 shadow-[var(--lofi-shadow)] backdrop-blur-xl transition-transform duration-300 ease-out sm:w-[400px] ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--lofi-cream-deep)] px-5 py-4">
+          <h3 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+            🕑 Previous Scenarios
+            <span className="rounded-full bg-[var(--lofi-blue)] px-2 py-0.5 text-[10px] text-[var(--lofi-blue-deep)]">
+              {items.length}
+            </span>
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close drawer"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-base font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+          >
+            →
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          {items.length === 0 ? (
+            <p className="mt-10 text-center text-sm text-[var(--lofi-muted)]">
+              No saved scenarios yet. Analyze a file and it lands here.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {similar.length > 0 && (
+                <section>
+                  <h4 className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+                    ✨ Similar Team Scenarios
+                  </h4>
+                  <ul className="flex flex-col gap-2">
+                    {similar.map((item) => (
+                      <li key={item.id}>
+                        <HistoryCard item={item} onPick={onPick} highlight />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              <section>
+                <h4 className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-[var(--lofi-muted)]">
+                  {similar.length > 0 ? "All Recent History" : "Recent History"}
+                </h4>
+                <ul className="flex flex-col gap-2">
+                  {rest.map((item) => (
+                    <li key={item.id}>
+                      <HistoryCard item={item} onPick={onPick} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }
+
+function HistoryCard({
+  item,
+  onPick,
+  highlight,
+}: {
+  item: HistoryItem;
+  onPick: (item: HistoryItem) => void;
+  highlight?: boolean;
+}) {
+  const fp = item.analysis?.fileProfile;
+  const headline =
+    item.summaryTitle ||
+    fp?.summaryTitle ||
+    item.analysis?.recommendedProgram ||
+    item.rawScenario.trim().replace(/\s+/g, " ").slice(0, 70) ||
+    "Saved scenario";
+  const fico = item.creditScore || fp?.creditScore || "";
+  const dti = item.dti || fp?.dti || "";
+  const ltv = item.ltv || fp?.ltv || "";
+  const state = item.propertyState || fp?.propertyState || "";
+  const group = item.profileGroup || fp?.profileGroup || "";
+  const badges = [
+    fico && fico !== "—" && { k: "FICO", v: fico },
+    dti && dti !== "—" && { k: "DTI", v: dti },
+    ltv && ltv !== "—" && { k: "LTV", v: ltv },
+    state && state !== "—" && { k: "ST", v: state },
+  ].filter(Boolean) as { k: string; v: string }[];
+
+  return (
+    <button
+      type="button"
+      onClick={() => onPick(item)}
+      className={`group flex w-full flex-col gap-2 rounded-xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-[var(--lofi-blue)] hover:bg-[var(--lofi-blue)]/10 ${
+        highlight
+          ? "border-[var(--lofi-blue)]/50 bg-[var(--lofi-blue)]/10"
+          : "border-[var(--lofi-cream-deep)]/60 bg-[var(--lofi-bg)]/40"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span className="flex-1 text-sm font-extrabold leading-snug text-[var(--lofi-ink)]">
+          {headline}
+        </span>
+        <span className="shrink-0 text-[11px] text-[var(--lofi-muted)]">
+          {whenOf(item.updatedAt)}
+        </span>
+      </div>
+      {badges.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {badges.map((b) => (
+            <span
+              key={b.k}
+              className="inline-flex items-center gap-1 rounded-md border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-2 py-0.5 text-[10px] font-bold text-[var(--lofi-blue-deep)]"
+            >
+              <span className="text-[var(--lofi-muted)]">{b.k}</span>
+              {b.v}
+            </span>
+          ))}
+        </div>
+      )}
+      {group && group !== "Unclassified" && (
+        <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lofi-blue)]/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--lofi-blue-deep)]">
+          <span aria-hidden>◆</span>
+          {group}
+        </span>
+      )}
+    </button>
+  );
+}
+
 
 
 function RecommendationCard({
