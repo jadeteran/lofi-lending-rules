@@ -233,6 +233,22 @@ export async function ingestHandbookFile(
   );
 
   const handbookName = file.name.replace(/\.[^.]+$/, "");
+
+  // Supersede: remove any prior chunks for the same handbook so the newly
+  // uploaded version becomes the single source of truth. This guarantees that
+  // when the new doc conflicts with older content, the old content is gone and
+  // can never resurface in vector search.
+  let supersededRows = 0;
+  const { data: oldRows, error: deleteError } = await admin
+    .from("guideline_library")
+    .delete()
+    .eq("handbook_name", handbookName)
+    .select("id");
+  if (deleteError) {
+    throw new Error(`Failed to clear previous "${handbookName}" version: ${deleteError.message}`);
+  }
+  supersededRows = oldRows?.length ?? 0;
+
   const rows: Record<string, unknown>[] = [];
   for (let i = 0; i < chunks.length; i++) {
     const embedding = await embedText(chunks[i], lovableApiKey);
@@ -253,5 +269,5 @@ export async function ingestHandbookFile(
     if (error) throw new Error(`guideline_library insert failed: ${error.message}`);
   }
 
-  return { fileName: file.name, chunks: chunks.length };
+  return { fileName: file.name, chunks: chunks.length, supersededRows };
 }
