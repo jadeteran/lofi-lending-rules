@@ -890,12 +890,12 @@ function RecommendationCard({
 
 function ResultCard({
   title,
-  emoji,
+  icon: Icon,
   text,
   accent,
 }: {
   title: string;
-  emoji: string;
+  icon: LucideIcon;
   text: string;
   accent: "lavender" | "peach" | "sage" | "blue";
 }) {
@@ -912,10 +912,10 @@ function ResultCard({
     <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
       <div className="mb-3 flex items-center gap-2">
         <span
-          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
           style={{ backgroundColor: accentVar }}
         >
-          {emoji} {title}
+          <Icon size={14} /> {title}
         </span>
       </div>
       <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
@@ -926,27 +926,27 @@ function ResultCard({
 }
 
 function DocumentationCard({ documentation }: { documentation: Documentation }) {
-  const buckets: { title: string; emoji: string; text: string }[] = [
-    { title: "Borrower Tasks", emoji: "🙋", text: documentation.borrowerTasks },
-    { title: "Borrower & LO Collaboration", emoji: "🤝", text: documentation.collaboration },
-    { title: "LO / Internal Broker Actions", emoji: "🗂️", text: documentation.loActions },
+  const buckets: { title: string; icon: LucideIcon; text: string }[] = [
+    { title: "Borrower Tasks", icon: Hand, text: documentation.borrowerTasks },
+    { title: "Borrower & LO Collaboration", icon: Handshake, text: documentation.collaboration },
+    { title: "LO / Internal Broker Actions", icon: Briefcase, text: documentation.loActions },
   ];
 
   return (
     <article className="flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
       <div className="mb-4 flex items-center gap-2">
         <span
-          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
           style={{ backgroundColor: "var(--lofi-sage)" }}
         >
-          📂 Documentation to Request
+          <FolderOpen size={14} /> Documentation to Request
         </span>
       </div>
       <div className="flex flex-col gap-5">
         {buckets.map((b) => (
           <div key={b.title}>
-            <p className="mb-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
-              {b.emoji} {b.title}
+            <p className="mb-1.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+              <b.icon size={13} /> {b.title}
             </p>
             <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
               {b.text}
@@ -961,13 +961,13 @@ function DocumentationCard({ documentation }: { documentation: Documentation }) 
 function statusStyle(status: AlternativeProgram["status"]) {
   switch (status) {
     case "Eligible":
-      return { bg: "var(--lofi-sage)", label: "✅ Eligible" };
+      return { bg: "var(--lofi-sage)", label: "Eligible", icon: CheckCircle2 };
     case "Likely Eligible":
-      return { bg: "var(--lofi-blue)", label: "🟦 Likely Eligible" };
+      return { bg: "var(--lofi-blue)", label: "Likely Eligible", icon: Circle };
     case "High Risk":
-      return { bg: "var(--lofi-peach)", label: "⚠️ High Risk" };
+      return { bg: "var(--lofi-peach)", label: "High Risk", icon: AlertTriangle };
     default:
-      return { bg: "var(--lofi-cream-deep)", label: "⛔ Ineligible" };
+      return { bg: "var(--lofi-cream-deep)", label: "Ineligible", icon: Ban };
   }
 }
 
