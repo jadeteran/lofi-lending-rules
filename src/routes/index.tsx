@@ -183,7 +183,7 @@ function StudyCorner() {
   function loadFromHistory(item: HistoryItem) {
     nextId.current = 1;
     setLoanType(item.selectedProgram);
-    setScenario("");
+    setScenario(item.rawScenario);
     setAttachments([]);
     setVersions([
       {
@@ -196,6 +196,7 @@ function StudyCorner() {
     ]);
     setSelected(0);
     setLastProgram(item.selectedProgram);
+    setDrawerOpen(false);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
