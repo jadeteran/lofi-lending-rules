@@ -287,15 +287,58 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--lofi-muted)]">
             Admin Config
           </h3>
-          <div className="rounded-2xl border border-dashed border-[var(--lofi-cream-deep)] p-6 text-center">
-            <BookOpen size={26} className="mx-auto text-[var(--lofi-blue-deep)]" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.txt,.md,.markdown,.csv,text/plain,application/pdf"
+            className="hidden"
+            onChange={(e) => void handleFiles(e.target.files)}
+          />
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              void handleFiles(e.dataTransfer.files);
+            }}
+            className={`w-full rounded-2xl border border-dashed p-6 text-center transition ${
+              dragOver
+                ? "border-[var(--lofi-blue)] bg-[var(--lofi-blue)]/10"
+                : "border-[var(--lofi-cream-deep)] hover:border-[var(--lofi-blue)]"
+            } ${uploading ? "cursor-wait opacity-70" : "cursor-pointer"}`}
+          >
+            {uploading ? (
+              <Loader2 size={26} className="mx-auto animate-spin text-[var(--lofi-blue-deep)]" />
+            ) : uploadDone ? (
+              <CheckCircle2 size={26} className="mx-auto text-[var(--lofi-blue-deep)]" />
+            ) : dragOver ? (
+              <UploadCloud size={26} className="mx-auto text-[var(--lofi-blue-deep)]" />
+            ) : (
+              <BookOpen size={26} className="mx-auto text-[var(--lofi-blue-deep)]" />
+            )}
             <p className="mt-2 text-sm font-semibold text-[var(--lofi-ink)]">
-              Handbook guideline upload
+              {uploading ? "Uploading & indexing…" : "Handbook guideline upload"}
             </p>
             <p className="mt-1 text-xs text-[var(--lofi-muted)]">
-              Coming soon — upload handbook guidelines directly to tune the assistant.
+              {uploading
+                ? "Extracting text and building the search index."
+                : "Drag & drop files here, or click to browse. PDF, TXT, MD, CSV."}
             </p>
-          </div>
+          </button>
+          {uploadDone && (
+            <p className="mt-2 text-xs font-semibold text-[var(--lofi-blue-deep)]">{uploadDone}</p>
+          )}
+          {uploadError && (
+            <p className="mt-2 text-xs font-semibold text-red-600">{uploadError}</p>
+          )}
         </section>
       </div>
     </div>
