@@ -66,16 +66,33 @@ function timeOf(ts: number) {
 
 function StudyCorner() {
   const analyze = useServerFn(analyzeScenario);
+  const saveFn = useServerFn(saveScenario);
+  const listFn = useServerFn(listScenarios);
   const [loanType, setLoanType] = useState<string>("");
   const [scenario, setScenario] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [versions, setVersions] = useState<Version[]>([]);
   const [selected, setSelected] = useState(0);
   const [showTimeline, setShowTimeline] = useState(true);
+  const [showHistory, setShowHistory] = useState(true);
+  const [savedFlash, setSavedFlash] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(1);
 
   const hasVersions = versions.length > 0;
+
+  const historyQuery = useQuery({
+    queryKey: ["scenario-history"],
+    queryFn: () => listFn(),
+    staleTime: 30_000,
+  });
+
+  // Briefly flash the "Saved" indicator, then fade it out.
+  useEffect(() => {
+    if (!savedFlash) return;
+    const t = setTimeout(() => setSavedFlash(false), 2600);
+    return () => clearTimeout(t);
+  }, [savedFlash]);
 
   const mutation = useMutation({
     mutationFn: (vars: {
@@ -100,10 +117,44 @@ function StudyCorner() {
         setSelected(updated.length - 1);
         return updated;
       });
+      // Silent background autosave — never blocks or interrupts the flow.
+      void saveFn({
+        data: {
+          rawScenario: vars.scenario,
+          selectedProgram: vars.loanType,
+          analysis: report as unknown as Record<string, unknown>,
+        },
+      })
+        .then((res) => {
+          if (res?.saved) {
+            setSavedFlash(true);
+            historyQuery.refetch();
+          }
+        })
+        .catch(() => {});
       setScenario("");
       setAttachments([]);
     },
   });
+
+  function loadFromHistory(item: HistoryItem) {
+    nextId.current = 1;
+    setLoanType(item.selectedProgram);
+    setScenario("");
+    setAttachments([]);
+    setVersions([
+      {
+        id: nextId.current++,
+        label: "Base analysis",
+        createdAt: item.updatedAt ? new Date(item.updatedAt).getTime() : Date.now(),
+        report: item.analysis,
+        isBase: true,
+      },
+    ]);
+    setSelected(0);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
 
   const canSubmit =
     loanType.trim() !== "" &&
