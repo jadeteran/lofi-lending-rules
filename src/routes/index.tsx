@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 
 import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
+import { AuthProvider, useAuth } from "@/components/AuthProvider";
+import { LoginPage } from "@/components/LoginPage";
+import { SettingsPanel } from "@/components/SettingsPanel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,8 +26,39 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: StudyCorner,
+  component: AppRoot,
 });
+
+function AppRoot() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
+  );
+}
+
+function AuthGate() {
+  const { loading, session } = useAuth();
+
+  if (loading) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{
+          background:
+            "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
+          color: "var(--lofi-muted)",
+          fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+        }}
+      >
+        <p className="animate-pulse text-sm">🎧 Tuning in…</p>
+      </div>
+    );
+  }
+
+  if (!session) return <LoginPage />;
+  return <StudyCorner />;
+}
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
