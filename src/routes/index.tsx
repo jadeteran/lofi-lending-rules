@@ -455,10 +455,11 @@ function StudyCorner() {
         </span>
       </div>
 
-      <RecentHistory
+      <HistoryDrawer
         items={historyQuery.data ?? []}
-        open={showHistory}
-        onToggle={() => setShowHistory((s) => !s)}
+        open={drawerOpen}
+        activeProfile={current?.report?.fileProfile ?? null}
+        onClose={() => setDrawerOpen(false)}
         onPick={loadFromHistory}
       />
 
