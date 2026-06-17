@@ -26,7 +26,7 @@ export function LoginPage() {
 
   return (
     <div
-      className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-2"
+      className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
       style={{ color: "var(--lofi-ink)", background: "var(--lofi-bg-1)", fontFamily: FONT }}
     >
       {/* Left: framed illustration */}
@@ -34,21 +34,21 @@ export function LoginPage() {
         <img
           src={workspaceAsset.url}
           alt="Cozy golden-hour lofi study workspace with headphones, plants and coffee"
-          className="aspect-square w-full max-w-xl rounded-3xl object-cover shadow-[var(--lofi-shadow)]"
+          className="aspect-square w-full max-w-md rounded-3xl object-cover shadow-[var(--lofi-shadow)]"
         />
       </div>
 
-      {/* Right: latte backdrop with floating glass card */}
+      {/* Right: latte backdrop with floating frosted glass card */}
       <div
         className="flex min-h-screen items-center justify-center px-6 py-12"
-        style={{ background: "var(--lofi-bg-1)" }}
+        style={{ background: "var(--lofi-bg-2)" }}
       >
         <div
-          className="w-full max-w-md rounded-3xl border p-8 backdrop-blur-md sm:p-10"
+          className="w-full max-w-md rounded-3xl border p-8 backdrop-blur-lg sm:p-10"
           style={{
             borderColor: "var(--lofi-glow-border)",
             background: "var(--lofi-card)",
-            boxShadow: "var(--lofi-shadow)",
+            boxShadow: "var(--lofi-shadow), inset 0 1px 0 oklch(1 0 0 / 0.4)",
           }}
         >
           <div className="mb-8 text-center">
