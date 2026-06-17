@@ -58,7 +58,7 @@ Each value must be a single string using "- " bullet lines separated by newlines
 
     try {
       const textPart = `Loan Program: ${data.loanType}\n\nScenario / Stipulation:\n${
-        data.scenario.trim() || "(See attached image(s) — extract the relevant stipulation or scenario details from them.)"
+        data.scenario.trim() || "(See attached file(s) — extract the relevant stipulation or scenario details from them.)"
       }`;
 
       const content: Array<
