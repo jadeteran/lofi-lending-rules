@@ -573,16 +573,19 @@ function StudyCorner() {
                   <RecommendationCard
                     program={current.report.recommendedProgram}
                     recommendation={current.report.recommendation}
+                    onOpenChat={openCardChat}
+                    activeId={activeCard?.id ?? null}
                   />
                 )}
-              <ResultCard title="Guideline Requirements" icon={ClipboardList} text={current.report.guidelineRequirements} accent="lavender" />
-              <ResultCard title="Potential Roadblocks" icon={Construction} text={current.report.roadblocks} accent="peach" />
-              <ResultCard title="LTV / Eligibility" icon={BarChart3} text={current.report.ltv} accent="blue" />
-              <AlternativesCard alternatives={current.report.alternatives} />
-              <DocumentationCard documentation={current.report.documentation} />
-              <ResultCard title="Handbook Citations & Sources" icon={BookOpen} text={current.report.citations} accent="sage" />
+              <ResultCard id="guideline-requirements" title="Guideline Requirements" icon={ClipboardList} text={current.report.guidelineRequirements} accent="lavender" onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <ResultCard id="roadblocks" title="Potential Roadblocks" icon={Construction} text={current.report.roadblocks} accent="peach" onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <ResultCard id="ltv" title="LTV / Eligibility" icon={BarChart3} text={current.report.ltv} accent="blue" onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <AlternativesCard alternatives={current.report.alternatives} onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <DocumentationCard documentation={current.report.documentation} onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
+              <ResultCard id="citations" title="Handbook Citations & Sources" icon={BookOpen} text={current.report.citations} accent="sage" onOpenChat={openCardChat} activeId={activeCard?.id ?? null} />
             </div>
           </section>
+
 
           {showTimeline && (
             <aside className="lg:w-72 lg:shrink-0">
