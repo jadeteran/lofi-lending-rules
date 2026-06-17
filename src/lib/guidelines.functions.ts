@@ -37,6 +37,7 @@ export type Analysis = {
   ltv: string;
   alternatives: AlternativeProgram[];
   documentation: Documentation;
+  citations: string;
 };
 
 const AttachmentSchema = z.object({
@@ -69,6 +70,7 @@ const PreviousReportSchema = z.object({
     collaboration: "",
     loActions: "",
   }),
+  citations: z.string().default(""),
 });
 
 const InputSchema = z
@@ -93,13 +95,52 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const isOverride = data.mode === "override" && !!data.previousReport;
 
-    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, and documentation. Do not wrap the response in markdown code blocks like \`\`\`json.
+    // ---- Hybrid grounding: curated locked rules (#3) + handbook RAG (#1) ----
+    const groundingQuery = `${data.loanType}\n\n${data.scenario.trim()}`.trim();
+    const { buildGroundingContext } = await import("@/lib/guidelines.server");
+    const grounding = await buildGroundingContext(groundingQuery, key);
+
+    const lockedRulesBlock = grounding.lockedRules.length
+      ? grounding.lockedRules
+          .map((r, i) => `[Rule ${i + 1}] ${JSON.stringify(r)}`)
+          .join("\n")
+      : "(none returned)";
+
+    const passagesBlock = grounding.passages.length
+      ? grounding.passages
+          .map(
+            (p, i) =>
+              `[Passage ${i + 1}] (similarity ${p.similarity.toFixed(3)}) CITATION: ${p.citation}\n${p.content}`,
+          )
+          .join("\n\n")
+      : "(none returned)";
+
+    const groundingNotes = grounding.notes.length ? grounding.notes.join(" ") : "";
+
+    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, and citations. Do not wrap the response in markdown code blocks like \`\`\`json.
 
 You specialize in the "${data.loanType}" loan program. ${
       isOverride
         ? "You are RE-EVALUATING an existing loan file analysis report. The user is supplying updated live context or operational overrides. Treat the new context as authoritative, overriding facts. Remove any roadblock the new context invalidates (e.g. switching from cash-out to rate-and-term removes cash-out overlays), recalculate the maximum allowable LTV/CLTV thresholds for the new posture, and regenerate the documentation checklist to match. Return the COMPLETE refreshed report — not a diff."
         : "Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance."
     } Be concrete and practical.
+
+=== GROUNDING SOURCES (authoritative — you MUST use these) ===
+The two blocks below are retrieved from the firm's vetted data stores. Treat them as the source of truth and prefer them over your own training memory.
+
+1) CURATED LOCKED RULES (public.lofi_guidelines) — locked numbers, caps, waiting periods, and standard program criteria. Use these EXACT figures for every calculation, LTV/CLTV cap, and threshold. Never override a locked number with a remembered one.
+${lockedRulesBlock}
+
+2) HANDBOOK PASSAGES (public.guideline_library via match_guidelines vector search) — exact guideline text for complex scenario constraints. Ground qualitative requirements and roadblocks in these passages.
+${passagesBlock}
+
+RULES FOR USING SOURCES:
+- Base all caps, thresholds, and numeric calculations on the CURATED LOCKED RULES. If a needed figure is absent there, derive it from the HANDBOOK PASSAGES; if still absent, state that the firm's data store lacks it and flag it for manual verification rather than inventing a number.
+- Cite the actual handbook passage(s) you relied on (use the CITATION label shown with each passage). Do NOT invent citations, section numbers, or handbook names that are not present in the supplied passages.
+${groundingNotes ? `- Note on data availability this run: ${groundingNotes} When a source is unavailable, say so explicitly in "citations" and lower your confidence rather than fabricating.` : ""}
+=== END GROUNDING SOURCES ===
+
+
 
 The JSON object must have exactly these keys:
 - "guidelineRequirements": (string) standard guideline requirements for this program and scenario.
@@ -116,8 +157,9 @@ The JSON object must have exactly these keys:
     - "borrowerTasks": items ONLY the borrower must produce or provide (e.g. their own bank statements, paystubs, letters of explanation).
     - "collaboration": items the borrower must help obtain or sign together with the LO (e.g. signing the final URLA/HUD forms, subordination agreements, updated HOI declarations needing the borrower's insurer).
     - "loActions": pure LO / internal broker actions handled internally (e.g. revised worksheets, rate lock confirmation, internal recalculations).
+- "citations": (string) the actual handbook citations and locked-rule references you relied on, as "- " bullet lines. Each bullet should pair a specific claim/number with its source, e.g. "- Max base loan amount $177,570 — per lofi_guidelines FHA Streamline rule" or "- 210-day seasoning requirement — FHA Handbook 4000.1 II.A.8.d (retrieved passage)". Use ONLY the CITATION labels supplied in the GROUNDING SOURCES; if a source was unavailable this run, say so here. Never fabricate section numbers.
 
-The three string values (guidelineRequirements, roadblocks, ltv) and each of the three documentation bucket values must be a single string using "- " bullet lines separated by newlines. If a documentation bucket has no items, set it to "- None for this scenario.". Output nothing outside the JSON object.
+The string values (guidelineRequirements, roadblocks, ltv, citations) and each of the three documentation bucket values must be a single string using "- " bullet lines separated by newlines. If a documentation bucket has no items, set it to "- None for this scenario.". Output nothing outside the JSON object.
 
 CRITICAL — documentation specificity (do NOT use generic document templates). Mine the scenario, loan application data, and any attached files for concrete details and inject them into every documentation bullet:
 1. Assets & Income: Never write a bare "bank statements" or "paystubs". Always attach the exact timeline constraint, e.g. "Most recent 30 consecutive days of paystubs" or "Last 2 full months of bank statements, all pages included". Tie cash-to-close, reserves, or seasoning amounts to the specific dollar figures when present.
@@ -188,6 +230,11 @@ Only state a detail if it appears in the provided context; never fabricate names
           collaboration: doc?.collaboration?.trim() || "- None for this scenario.",
           loActions: doc?.loActions?.trim() || "- None for this scenario.",
         },
+        citations:
+          parsed.citations?.trim() ||
+          (groundingNotes
+            ? `- Grounding sources limited this run: ${groundingNotes}`
+            : "- No handbook citations returned for this scenario."),
       };
     } catch (err) {
       const e = err as { statusCode?: number; message?: string };
