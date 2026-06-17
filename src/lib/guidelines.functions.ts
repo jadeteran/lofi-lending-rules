@@ -125,12 +125,20 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const groundingNotes = grounding.notes.length ? grounding.notes.join(" ") : "";
 
-    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, and citations. Do not wrap the response in markdown code blocks like \`\`\`json.
+    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, citations, recommendedProgram, and recommendation. Do not wrap the response in markdown code blocks like \`\`\`json.
 
-You specialize in the "${data.loanType}" loan program. ${
-      isOverride
-        ? "You are RE-EVALUATING an existing loan file analysis report. The user is supplying updated live context or operational overrides. Treat the new context as authoritative, overriding facts. Remove any roadblock the new context invalidates (e.g. switching from cash-out to rate-and-term removes cash-out overlays), recalculate the maximum allowable LTV/CLTV thresholds for the new posture, and regenerate the documentation checklist to match. Return the COMPLETE refreshed report — not a diff."
-        : "Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance."
+${
+      isProgramFinder
+        ? `PROGRAM FINDER MODE: The loan officer is UNSURE which program fits and wants you to find it. Do NOT assume a program. Using ONLY the grounding sources below, evaluate the raw borrower scenario against every program represented in the data WITHOUT any pre-filter, then systematically identify and RANK the top 3 most viable matching loan programs. Choose the single best-fit program as your #1 recommendation. Populate "guidelineRequirements", "roadblocks", "ltv", and "documentation" specifically for that #1 recommended program (as if it were the chosen program). Put the recommended program name in "recommendedProgram". The "alternatives" array must contain the ranked programs you considered (the #1 recommendation first, then the runners-up and any rejected programs), so the ranking is visible. ${
+            isOverride
+              ? "You are RE-EVALUATING an existing program-finder report with updated authoritative context — re-rank the programs from scratch and return the COMPLETE refreshed report, not a diff."
+              : ""
+          }`
+        : `You specialize in the "${data.loanType}" loan program. ${
+            isOverride
+              ? "You are RE-EVALUATING an existing loan file analysis report. The user is supplying updated live context or operational overrides. Treat the new context as authoritative, overriding facts. Remove any roadblock the new context invalidates (e.g. switching from cash-out to rate-and-term removes cash-out overlays), recalculate the maximum allowable LTV/CLTV thresholds for the new posture, and regenerate the documentation checklist to match. Return the COMPLETE refreshed report — not a diff."
+              : "Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance."
+          } Set "recommendedProgram" to "${data.loanType}".`
     } Be concrete and practical.
 
 === GROUNDING SOURCES (authoritative — you MUST use these) ===
