@@ -284,14 +284,25 @@ Only state a detail if it appears in the provided context; never fabricate names
           (groundingNotes
             ? `- Grounding sources limited this run: ${groundingNotes}`
             : "- No handbook citations returned for this scenario."),
-        recommendedProgram:
-          parsed.recommendedProgram?.trim() ||
-          (isProgramFinder ? "" : data.loanType),
+        recommendedProgram: recommended,
         recommendation:
           parsed.recommendation?.trim() ||
           (isProgramFinder
             ? "- No program recommendation could be derived from the available data."
             : "- N/A — program was specified by the loan officer."),
+        fileProfile: {
+          summaryTitle:
+            clean(fp?.summaryTitle) ||
+            [recommended || data.loanType, clean(fp?.creditScore) && `${clean(fp?.creditScore)} FICO`, clean(fp?.dti) && `${clean(fp?.dti)} DTI`, clean(fp?.propertyState)]
+              .filter(Boolean)
+              .join(" · ") ||
+            "Saved scenario",
+          creditScore: clean(fp?.creditScore) || "—",
+          dti: clean(fp?.dti) || "—",
+          ltv: clean(fp?.ltv) || "—",
+          propertyState: clean(fp?.propertyState) || "—",
+          profileGroup: clean(fp?.profileGroup) || "Unclassified",
+        },
       };
     } catch (err) {
       const e = err as { statusCode?: number; message?: string };
