@@ -37,6 +37,7 @@ export type Analysis = {
   ltv: string;
   alternatives: AlternativeProgram[];
   documentation: Documentation;
+  citations: string;
 };
 
 const AttachmentSchema = z.object({
