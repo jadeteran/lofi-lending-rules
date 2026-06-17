@@ -15,11 +15,17 @@ export const LOAN_TYPES = [
   "Private Money / Hard Money",
 ] as const;
 
+export type Documentation = {
+  borrowerTasks: string;
+  collaboration: string;
+  loActions: string;
+};
+
 export type Analysis = {
   guidelineRequirements: string;
   roadblocks: string;
   ltv: string;
-  documentation: string;
+  documentation: Documentation;
 };
 
 const AttachmentSchema = z.object({
@@ -28,11 +34,21 @@ const AttachmentSchema = z.object({
   dataUrl: z.string().min(1),
 });
 
+const DocumentationSchema = z.object({
+  borrowerTasks: z.string().default(""),
+  collaboration: z.string().default(""),
+  loActions: z.string().default(""),
+});
+
 const PreviousReportSchema = z.object({
   guidelineRequirements: z.string().default(""),
   roadblocks: z.string().default(""),
   ltv: z.string().default(""),
-  documentation: z.string().default(""),
+  documentation: DocumentationSchema.default({
+    borrowerTasks: "",
+    collaboration: "",
+    loActions: "",
+  }),
 });
 
 const InputSchema = z
@@ -65,13 +81,16 @@ You specialize in the "${data.loanType}" loan program. ${
         : "Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance."
     } Be concrete and practical.
 
-The JSON object must have exactly these string keys:
-- "guidelineRequirements": standard guideline requirements for this program and scenario.
-- "roadblocks": potential roadblocks, red flags, or reasons this could get denied.
-- "ltv": maximum allowable LTV / CLTV thresholds and an eligibility read for this exact scenario.
-- "documentation": exact documentation to request from the borrower to clear this.
+The JSON object must have exactly these keys:
+- "guidelineRequirements": (string) standard guideline requirements for this program and scenario.
+- "roadblocks": (string) potential roadblocks, red flags, or reasons this could get denied.
+- "ltv": (string) maximum allowable LTV / CLTV thresholds and an eligibility read for this exact scenario.
+- "documentation": (object) the documents to request, split into operational buckets for the Loan Officer. It must be an object with exactly these three string keys:
+    - "borrowerTasks": items ONLY the borrower must produce or provide (e.g. their own bank statements, paystubs, letters of explanation).
+    - "collaboration": items the borrower must help obtain or sign together with the LO (e.g. signing the final URLA/HUD forms, subordination agreements, updated HOI declarations needing the borrower's insurer).
+    - "loActions": pure LO / internal broker actions handled internally (e.g. revised worksheets, rate lock confirmation, internal recalculations).
 
-Each value must be a single string using "- " bullet lines separated by newlines. Output nothing outside the JSON object.`;
+The three string values (guidelineRequirements, roadblocks, ltv) and each of the three documentation bucket values must be a single string using "- " bullet lines separated by newlines. If a documentation bucket has no items, set it to "- None for this scenario.". Output nothing outside the JSON object.`;
 
     try {
       const textPart = `Loan Program: ${data.loanType}\n\n${
@@ -111,11 +130,16 @@ Each value must be a single string using "- " bullet lines separated by newlines
       const jsonStr = start !== -1 && end !== -1 ? cleaned.slice(start, end + 1) : cleaned;
 
       const parsed = JSON.parse(jsonStr) as Partial<Analysis>;
+      const doc = parsed.documentation;
       return {
         guidelineRequirements: parsed.guidelineRequirements ?? "No requirements returned.",
         roadblocks: parsed.roadblocks ?? "No roadblocks returned.",
         ltv: parsed.ltv ?? "No LTV thresholds returned.",
-        documentation: parsed.documentation ?? "No documentation returned.",
+        documentation: {
+          borrowerTasks: doc?.borrowerTasks?.trim() || "- None for this scenario.",
+          collaboration: doc?.collaboration?.trim() || "- None for this scenario.",
+          loActions: doc?.loActions?.trim() || "- None for this scenario.",
+        },
       };
     } catch (err) {
       const e = err as { statusCode?: number; message?: string };

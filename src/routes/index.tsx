@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-import { analyzeScenario, LOAN_TYPES, type Analysis } from "@/lib/guidelines.functions";
+import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation } from "@/lib/guidelines.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -324,7 +324,7 @@ function StudyCorner() {
               <ResultCard title="Guideline Requirements" emoji="📋" text={current.report.guidelineRequirements} accent="lavender" />
               <ResultCard title="Potential Roadblocks" emoji="🚧" text={current.report.roadblocks} accent="peach" />
               <ResultCard title="LTV / Eligibility" emoji="📊" text={current.report.ltv} accent="blue" />
-              <ResultCard title="Documentation to Request" emoji="📂" text={current.report.documentation} accent="sage" />
+              <DocumentationCard documentation={current.report.documentation} />
             </div>
           </section>
 
@@ -429,6 +429,39 @@ function ResultCard({
       <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
         {text}
       </p>
+    </article>
+  );
+}
+
+function DocumentationCard({ documentation }: { documentation: Documentation }) {
+  const buckets: { title: string; emoji: string; text: string }[] = [
+    { title: "Borrower Tasks", emoji: "🙋", text: documentation.borrowerTasks },
+    { title: "Borrower & LO Collaboration", emoji: "🤝", text: documentation.collaboration },
+    { title: "LO / Internal Broker Actions", emoji: "🗂️", text: documentation.loActions },
+  ];
+
+  return (
+    <article className="flex flex-col rounded-3xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)]">
+      <div className="mb-4 flex items-center gap-2">
+        <span
+          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          style={{ backgroundColor: "var(--lofi-sage)" }}
+        >
+          📂 Documentation to Request
+        </span>
+      </div>
+      <div className="flex flex-col gap-5">
+        {buckets.map((b) => (
+          <div key={b.title}>
+            <p className="mb-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+              {b.emoji} {b.title}
+            </p>
+            <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+              {b.text}
+            </p>
+          </div>
+        ))}
+      </div>
     </article>
   );
 }
