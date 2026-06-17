@@ -65,7 +65,7 @@ function timeOf(ts: number) {
 
 function StudyCorner() {
   const analyze = useServerFn(analyzeScenario);
-  const [loanType, setLoanType] = useState("");
+  const [loanType, setLoanType] = useState<string>(PROGRAM_FINDER);
   const [scenario, setScenario] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [versions, setVersions] = useState<Version[]>([]);
