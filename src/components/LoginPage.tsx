@@ -3,8 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import workspaceAsset from "@/assets/lofi-workspace.png.asset.json";
 
-const BG =
-  "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)";
+const FONT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 
 export function LoginPage() {
   const { signIn } = useAuth();
