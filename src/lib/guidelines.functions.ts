@@ -168,6 +168,21 @@ Only state a detail if it appears in the provided context; never fabricate names
         guidelineRequirements: parsed.guidelineRequirements ?? "No requirements returned.",
         roadblocks: parsed.roadblocks ?? "No roadblocks returned.",
         ltv: parsed.ltv ?? "No LTV thresholds returned.",
+        alternatives: Array.isArray(parsed.alternatives)
+          ? parsed.alternatives.map((a) => {
+              const allowed: AlternativeStatus[] = ["Eligible", "Likely Eligible", "High Risk", "Ineligible"];
+              const status = allowed.includes(a?.status as AlternativeStatus)
+                ? (a!.status as AlternativeStatus)
+                : "High Risk";
+              return {
+                program: a?.program?.trim() || "Unnamed program",
+                status,
+                ltvCap: a?.ltvCap?.trim() || "—",
+                benefit: a?.benefit?.trim() || "—",
+                vulnerability: a?.vulnerability?.trim() || "- No material risk flagged.",
+              };
+            })
+          : [],
         documentation: {
           borrowerTasks: doc?.borrowerTasks?.trim() || "- None for this scenario.",
           collaboration: doc?.collaboration?.trim() || "- None for this scenario.",
