@@ -99,6 +99,8 @@ function timeOf(ts: number) {
 }
 
 function StudyCorner() {
+  const { role, signOut } = useAuth();
+  const [showSettings, setShowSettings] = useState(false);
   const analyze = useServerFn(analyzeScenario);
   const saveFn = useServerFn(saveScenario);
   const listFn = useServerFn(listScenarios);
