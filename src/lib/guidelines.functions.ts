@@ -356,3 +356,94 @@ export const uploadGuidelines = createServerFn({ method: "POST" })
     const totalChunks = results.reduce((sum, r) => sum + r.chunks, 0);
     return { results, totalChunks };
   });
+
+// ---------------------------------------------------------------------------
+// Report card assistant: localized Q&A scoped to a specific report card, with
+// full live report context (loan type, scenario, selected version, report).
+// Stateless — message history is supplied by the client each call.
+// ---------------------------------------------------------------------------
+
+const ChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1),
+});
+
+const AskInputSchema = z.object({
+  cardLabel: z.string().min(1),
+  cardValue: z.string().default(""),
+  loanType: z.string().default(""),
+  scenario: z.string().default(""),
+  versionLabel: z.string().default(""),
+  report: z.record(z.string(), z.unknown()).default({}),
+  mode: z.enum(["insight", "chat"]).default("chat"),
+  messages: z.array(ChatMessageSchema).max(12).default([]),
+});
+
+export type ReportChatMessage = z.infer<typeof ChatMessageSchema>;
+
+export const askReportQuestion = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => AskInputSchema.parse(data))
+  .handler(async ({ data }): Promise<{ text: string }> => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("AI is not configured. Missing LOVABLE_API_KEY.");
+
+    const gateway = createLovableAiGatewayProvider(key);
+
+    const reportJson = (() => {
+      try {
+        return JSON.stringify(data.report, null, 2);
+      } catch {
+        return "{}";
+      }
+    })();
+
+    const system = `You are a concise mortgage underwriting assistant embedded inside a loan analysis report. The loan officer clicked the "${data.cardLabel}" card and is asking about it.
+
+Answer ONLY from the report context provided below — it is the source of truth and reflects the user's current loan type, scenario, and selected report version. If something is not in the context, say so briefly and suggest verifying against investor overlays. Never invent figures, citations, or program rules.
+
+Keep answers tight and practical (2–5 sentences, or short bullet lines). Plain text only — no markdown headers or code fences. Focus on the "${data.cardLabel}" card, but you may reference other parts of the report when relevant.
+
+=== ACTIVE REPORT CONTEXT ===
+Loan type: ${data.loanType || "(unspecified)"}
+Scenario: ${data.scenario || "(none provided)"}
+Report version: ${data.versionLabel || "(current)"}
+
+FOCUSED CARD — ${data.cardLabel}:
+${data.cardValue || "(no rendered value)"}
+
+FULL REPORT JSON:
+${reportJson}
+=== END CONTEXT ===`;
+
+    const messages =
+      data.mode === "insight"
+        ? [
+            {
+              role: "user" as const,
+              content: `In 1–2 sentences, give a sharp insight summary of the "${data.cardLabel}" card for this exact scenario — the single most important takeaway a loan officer should know. No preamble.`,
+            },
+          ]
+        : data.messages.map((m) => ({ role: m.role, content: m.content }));
+
+    if (messages.length === 0) {
+      throw new Error("No question provided.");
+    }
+
+    try {
+      const { text } = await generateText({
+        model: gateway("google/gemini-3-flash-preview"),
+        system,
+        messages,
+      });
+      return { text: text.trim() || "I couldn't generate a response — try rephrasing." };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("429")) {
+        throw new Error("The assistant is rate-limited right now. Please try again in a moment.");
+      }
+      if (msg.includes("402")) {
+        throw new Error("AI credits are exhausted. Add credits in Settings → Workspace → Usage.");
+      }
+      throw new Error(`Assistant error: ${msg.slice(0, 200)}`);
+    }
+  });
