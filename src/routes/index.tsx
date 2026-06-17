@@ -8,6 +8,7 @@ import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.f
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import workspaceAsset from "@/assets/lofi-workspace.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -584,9 +585,23 @@ function StudyCorner() {
         </div>
       ) : (
         !mutation.isError && (
-          <div className="rounded-xl border border-dashed border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/70 px-8 py-16 text-center">
-            <p className="text-3xl">☕</p>
-            <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
+          <div className="relative mx-auto max-w-2xl text-center">
+            <div
+              className="overflow-hidden rounded-3xl border"
+              style={{
+                borderColor: "var(--lofi-glow-border)",
+                boxShadow: "var(--lofi-shadow)",
+                animation: "lofiFloat 6s ease-in-out infinite",
+              }}
+            >
+              <img
+                src={workspaceAsset.url}
+                alt="Cozy golden-hour lofi study workspace with headphones, plants and coffee"
+                className="h-64 w-full object-cover sm:h-80"
+              />
+            </div>
+            <p className="mt-6 text-3xl">☕</p>
+            <p className="mt-2 text-lg font-bold text-[var(--lofi-blue-deep)]">
               Queue the beats and drop a scenario to analyze…
             </p>
           </div>
@@ -670,7 +685,7 @@ function HistoryDrawer({
       <div
         onClick={onClose}
         aria-hidden={!open}
-        className={`fixed inset-0 z-40 bg-[var(--lofi-blue-deep)]/30 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-[oklch(0.28_0.05_60_/_0.45)] backdrop-blur-sm transition-opacity duration-300 ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -679,7 +694,7 @@ function HistoryDrawer({
       <aside
         role="dialog"
         aria-label="Previous scenarios"
-        className={`fixed inset-y-0 left-0 z-50 flex w-full flex-col border-r border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/95 shadow-[var(--lofi-shadow)] backdrop-blur-xl transition-transform duration-300 ease-out sm:w-[400px] ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-full flex-col border-r border-[var(--lofi-glow-border)] bg-[var(--lofi-card)] shadow-[var(--lofi-shadow)] backdrop-blur-2xl transition-transform duration-300 ease-out sm:w-[400px] ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

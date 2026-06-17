@@ -1,42 +1,31 @@
-# Left History Drawer + Smart Scenario Matching
+## Goal
+Lift the heavy dark layout into a warm "golden-hour lofi latte" theme, integrate the uploaded cozy workspace illustration as a hero element + login art, and refine cards/drawer into golden glassmorphism.
 
-Migrate the inline "Recent History" panel into a sliding left-anchored drawer that doubles as an intelligent scenario index. All work stays in the frontend (`src/routes/index.tsx`) — no schema or backend changes needed, since `listScenarios` already returns the metrics we need (`profileGroup`, `propertyState`, `creditScore`, `dti`, `ltv`).
+## 1. Prepare the illustration asset
+- Render the uploaded PDF (`Untitled_-_June_16_2026...pdf`) to a high-res PNG (the cozy golden-hour desk scene).
+- Upload it via `lovable-assets` and write the pointer to `src/assets/lofi-workspace.png.asset.json`. Reference it in code via the pointer's `.url`. No binary committed to the repo.
 
-## 1. Drawer shell
-- Replace the inline `<RecentHistory>` block (currently rendered at line ~441) with a new `HistoryDrawer` component rendered as a fixed overlay.
-- Slide-in animation from the LEFT edge using `transform: translateX(...)` + `transition`.
-  - Desktop: fixed panel `w-[400px]`, glassmorphism (`bg-[var(--lofi-card)]`, `backdrop-blur`, border, lofi shadow).
-  - Mobile: `w-full` full-screen panel for clean phone legibility.
-- A dimmed click-dismiss overlay behind the panel (click closes the drawer).
-- Replace the existing `showHistory` boolean's role with a new `drawerOpen` state (default closed).
+## 2. Color palette overhaul (`src/styles.css`)
+Warm up the existing `--lofi-*` tokens to a latte/milky-espresso register pulled from the illustration:
+- **Base background**: amber-tinted warm charcoal gradient (lighter & warmer than current near-black), e.g. `--lofi-bg-1/2/3` shifted toward `oklch(~0.28–0.34, hue ~65)` so it reads "warm espresso" not "black."
+- **Headers/accents**: vibrant sunset gold/amber (`--lofi-blue`/`--lofi-blue-deep` retuned to the window-light gold) for primary headers.
+- **Body text**: soft cream (`--lofi-ink`/`--lofi-cream`).
+- **Glass**: bump `--lofi-card` translucency and add a subtle golden-hour glow — introduce `--lofi-glow` (warm gold) and a `--lofi-glow-border` so cards/inputs get a faint amber edge + soft outer glow. Keep `backdrop-filter` blur in the existing `@layer base` rule.
+- Add a soft global radial "sun glow" accent at top of the page background.
 
-## 2. Toggle button
-- Add a clock toggle button labeled "🕑 Previous Scenarios" near the top-left of the workspace header (the row currently at line ~273, which is right-aligned — restructure to a left/right split so the toggle sits top-left and the settings/sign-out stay top-right).
-- Clicking it toggles `drawerOpen`. Styled to match the lofi glassmorphism pill aesthetic.
+## 3. Login page redesign (`src/components/LoginPage.tsx`)
+- Convert to a two-column layout: `lg:grid lg:grid-cols-2`, stacked on mobile.
+- **Left column**: the illustration, framed with large rounded corners (`rounded-3xl`), soft golden glow shadow, object-cover full-bleed within its panel. Hidden or shown above the card on small screens.
+- **Right column**: the existing "Welcome back" glass card, vertically centered, upgraded with the new golden glow border.
+- Keep all auth logic untouched.
 
-## 3. Smart "Similar Team Scenarios" (Top 5)
-- When an active report exists on screen (`current`), derive the active profile from `current.report.fileProfile` (FICO/DTI/LTV/state/profile_group).
-- Compute a client-side similarity score across the already-fetched history list and pick the top 5:
-  - +strong match: same `profileGroup`
-  - +match: same `propertyState`
-  - +match: FICO within ~20 pts band; DTI within ~5 pts band
-- Render these under a clearly titled "Similar Team Scenarios" section at the top of the drawer. Below it, an "All Recent History" section lists the remaining items chronologically.
-- When no active report exists, the drawer shows only the chronological history.
+## 4. Workspace hero image (`src/routes/index.tsx`, empty-queue block ~585–593)
+- Replace the plain dashed "☕ Queue the beats…" empty state with the illustration as a floating, beautifully scaled hero graphic: rounded corners, soft golden drop shadow, gentle float, with the "Queue the beats and drop a scenario to analyze…" caption beneath/over it. Only shows when there's no active report (preserves existing conditional).
 
-## 4. Reload interaction (full hydration)
-- Update `loadFromHistory` so clicking a card restores the complete past run:
-  - `setScenario(item.rawScenario)` so the original text input rehydrates (currently it is cleared — fix this),
-  - `setLoanType(item.selectedProgram)` for the dropdown,
-  - rebuild the report version from `item.analysis` and select it,
-  - reset `lastProgram` and scroll to top.
-- Close the drawer after a pick so the reloaded report is fully visible.
+## 5. Left drawer glass refinement (`HistoryDrawer`, ~682)
+- Strengthen the warm glass: keep `backdrop-blur-xl`, use the new translucent `--lofi-card` + golden glow border so it blurs beautifully over the warm canvas. Warm the overlay tint (~682/673) to amber instead of blue. Mobile full-width + desktop 400px unchanged.
 
-## 5. Mobile close
-- Add a prominent close control (right-aligned ✕/→ arrow) inside the drawer header so it tucks away instantly.
-- Overlay click also dismisses.
-
-## Technical notes
-- Reuse the existing card markup (headline + metric badges + profile_group tag) from the current `RecentHistory` for each scenario card inside the drawer.
-- Keep `historyQuery` as-is; similarity is computed over `historyQuery.data`.
-- Body scroll-lock while the drawer is open on mobile (optional, via a class).
-- No changes to server functions, Supabase, or the analysis flow.
+## Notes / Scope
+- Pure styling + one asset; no auth, server-function, data, or business-logic changes.
+- Header gold accents (h1, buttons) inherit the retuned tokens automatically; minor class tweaks only where needed for the glow.
+- Verify with a preview screenshot at desktop and mobile widths after build.

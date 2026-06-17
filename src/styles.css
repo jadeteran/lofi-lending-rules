@@ -132,35 +132,40 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
-/* ===== Warm Retro Lofi Anime theme (golden-hour workspace) ===== */
+/* ===== Warm Retro Lofi Anime theme (golden-hour latte workspace) ===== */
 :root {
-  /* deep cozy dark sepia / charcoal canvas (#1a1512 vibe) */
-  --lofi-bg-1: oklch(0.21 0.018 60);
-  --lofi-bg-2: oklch(0.26 0.03 55);
-  --lofi-bg-3: oklch(0.18 0.015 50);
+  /* warm amber-tinted espresso canvas — lighter & warmer than near-black */
+  --lofi-bg-1: oklch(0.3 0.03 62);
+  --lofi-bg-2: oklch(0.37 0.045 68);
+  --lofi-bg-3: oklch(0.26 0.028 55);
 
   /* warm cream text + highlights */
-  --lofi-cream: oklch(0.95 0.03 85);
-  /* thin translucent warm border so the warmth shows through */
-  --lofi-cream-deep: oklch(0.85 0.05 75 / 0.16);
+  --lofi-cream: oklch(0.96 0.035 88);
+  /* warm golden translucent border */
+  --lofi-cream-deep: oklch(0.85 0.08 78 / 0.22);
 
-  /* vintage orange / amber accents replace the cold blue */
-  --lofi-blue: oklch(0.74 0.14 65);
-  --lofi-blue-deep: oklch(0.8 0.15 72);
+  /* vibrant sunset gold / amber from the window light */
+  --lofi-blue: oklch(0.79 0.15 72);
+  --lofi-blue-deep: oklch(0.85 0.16 78);
 
   /* warm tinted accent chips */
-  --lofi-lavender: oklch(0.62 0.09 45);
-  --lofi-peach: oklch(0.66 0.13 55);
-  --lofi-sage: oklch(0.6 0.08 110);
+  --lofi-lavender: oklch(0.64 0.1 48);
+  --lofi-peach: oklch(0.68 0.14 55);
+  --lofi-sage: oklch(0.62 0.08 110);
 
-  /* warm cream ink on the dark canvas */
-  --lofi-ink: oklch(0.93 0.03 82);
-  --lofi-muted: oklch(0.72 0.04 70);
+  /* soft cream ink on the warm canvas */
+  --lofi-ink: oklch(0.95 0.035 84);
+  --lofi-muted: oklch(0.78 0.05 74);
 
-  /* glassmorphism: semi-transparent dark fill */
-  --lofi-card: oklch(0.26 0.025 58 / 0.55);
+  /* glassmorphism: warmer semi-transparent fill */
+  --lofi-card: oklch(0.36 0.04 66 / 0.5);
 
-  --lofi-shadow: 0 18px 45px -22px oklch(0.12 0.04 50 / 0.7);
+  /* golden-hour glow tokens */
+  --lofi-glow: oklch(0.82 0.16 75 / 0.35);
+  --lofi-glow-border: oklch(0.85 0.12 78 / 0.3);
+
+  --lofi-shadow: 0 18px 45px -20px oklch(0.18 0.06 55 / 0.65),
+    0 0 38px -16px var(--lofi-glow);
 }
 
 @layer base {
@@ -171,6 +176,10 @@
   body {
     background-color: var(--lofi-bg-1);
     color: var(--lofi-ink);
+    background-image:
+      radial-gradient(900px 480px at 50% -12%, var(--lofi-glow) 0%, transparent 60%),
+      radial-gradient(1200px 700px at 80% 0%, oklch(0.4 0.05 70 / 0.4) 0%, transparent 55%);
+    background-attachment: fixed;
   }
 
   /* Glassmorphism: blur the warm canvas behind translucent surfaces */
@@ -179,9 +188,16 @@
   form textarea,
   form button,
   aside > div {
-    backdrop-filter: blur(14px) saturate(130%);
+    backdrop-filter: blur(16px) saturate(140%);
   }
 }
+
+@keyframes lofiFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+
 
 .report-md h2 {
   font-size: 1.05rem;
