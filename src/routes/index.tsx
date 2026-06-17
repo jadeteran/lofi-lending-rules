@@ -30,13 +30,13 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div
       className="min-h-screen"
       style={{
-        fontFamily: "'Nunito', ui-sans-serif, system-ui, sans-serif",
+        fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
         background:
-          "linear-gradient(160deg, var(--lofi-cream) 0%, var(--lofi-lavender) 55%, var(--lofi-cream-deep) 100%)",
+          "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
         color: "var(--lofi-ink)",
       }}
     >
-      <div className="mx-auto max-w-6xl px-6 py-16 sm:px-10 sm:py-20">{children}</div>
+      <div className="mx-auto max-w-5xl px-6 py-16 text-center sm:px-10 sm:py-20">{children}</div>
     </div>
   );
 }
