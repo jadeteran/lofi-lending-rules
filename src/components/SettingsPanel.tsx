@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { X, BookOpen } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, BookOpen, Loader2, CheckCircle2, UploadCloud } from "lucide-react";
 
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -9,6 +9,16 @@ import {
   deleteUser,
   type ManagedUser,
 } from "@/lib/auth.functions";
+import { uploadGuidelines } from "@/lib/guidelines.functions";
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file."));
+    reader.readAsDataURL(file);
+  });
+}
 
 const inputCls =
   "rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-3 py-2.5 text-sm font-semibold text-[var(--lofi-ink)] outline-none transition focus:border-[var(--lofi-blue)] focus:ring-2 focus:ring-[var(--lofi-blue)]/40 placeholder:font-normal placeholder:text-[var(--lofi-muted)]";
@@ -95,6 +105,42 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to delete user.");
+    }
+  }
+
+  // Handbook upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadDone, setUploadDone] = useState<string | null>(null);
+
+  async function handleFiles(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    if (!accessToken) {
+      setUploadError("You must be signed in as an admin to upload.");
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    setUploadDone(null);
+    try {
+      const files = await Promise.all(
+        Array.from(fileList).map(async (f) => ({
+          name: f.name,
+          mediaType: f.type || "application/octet-stream",
+          dataUrl: await fileToDataUrl(f),
+        })),
+      );
+      const res = await uploadGuidelines({ data: { accessToken, files } });
+      setUploadDone(
+        `Added ${res.totalChunks} passage${res.totalChunks === 1 ? "" : "s"} from ${res.results.length} file${res.results.length === 1 ? "" : "s"}.`,
+      );
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -241,15 +287,58 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--lofi-muted)]">
             Admin Config
           </h3>
-          <div className="rounded-2xl border border-dashed border-[var(--lofi-cream-deep)] p-6 text-center">
-            <BookOpen size={26} className="mx-auto text-[var(--lofi-blue-deep)]" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.txt,.md,.markdown,.csv,text/plain,application/pdf"
+            className="hidden"
+            onChange={(e) => void handleFiles(e.target.files)}
+          />
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              void handleFiles(e.dataTransfer.files);
+            }}
+            className={`w-full rounded-2xl border border-dashed p-6 text-center transition ${
+              dragOver
+                ? "border-[var(--lofi-blue)] bg-[var(--lofi-blue)]/10"
+                : "border-[var(--lofi-cream-deep)] hover:border-[var(--lofi-blue)]"
+            } ${uploading ? "cursor-wait opacity-70" : "cursor-pointer"}`}
+          >
+            {uploading ? (
+              <Loader2 size={26} className="mx-auto animate-spin text-[var(--lofi-blue-deep)]" />
+            ) : uploadDone ? (
+              <CheckCircle2 size={26} className="mx-auto text-[var(--lofi-blue-deep)]" />
+            ) : dragOver ? (
+              <UploadCloud size={26} className="mx-auto text-[var(--lofi-blue-deep)]" />
+            ) : (
+              <BookOpen size={26} className="mx-auto text-[var(--lofi-blue-deep)]" />
+            )}
             <p className="mt-2 text-sm font-semibold text-[var(--lofi-ink)]">
-              Handbook guideline upload
+              {uploading ? "Uploading & indexing…" : "Handbook guideline upload"}
             </p>
             <p className="mt-1 text-xs text-[var(--lofi-muted)]">
-              Coming soon — upload handbook guidelines directly to tune the assistant.
+              {uploading
+                ? "Extracting text and building the search index."
+                : "Drag & drop files here, or click to browse. PDF, TXT, MD, CSV."}
             </p>
-          </div>
+          </button>
+          {uploadDone && (
+            <p className="mt-2 text-xs font-semibold text-[var(--lofi-blue-deep)]">{uploadDone}</p>
+          )}
+          {uploadError && (
+            <p className="mt-2 text-xs font-semibold text-red-600">{uploadError}</p>
+          )}
         </section>
       </div>
     </div>

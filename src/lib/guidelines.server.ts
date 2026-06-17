@@ -145,3 +145,112 @@ export async function buildGroundingContext(
 
   return { lockedRules, passages, notes };
 }
+
+// ---------------------------------------------------------------------------
+// Handbook ingestion: extract text from an uploaded file, chunk it, embed each
+// chunk, and insert rows into public.guideline_library. Service-role client is
+// used because RLS protects writes to this table.
+// ---------------------------------------------------------------------------
+
+type EmbedInput = number[];
+
+async function embedText(text: string, lovableApiKey: string): Promise<EmbedInput> {
+  return embedQuery(text, lovableApiKey);
+}
+
+function decodeDataUrl(dataUrl: string): Uint8Array {
+  const comma = dataUrl.indexOf(",");
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function extractText(
+  name: string,
+  mediaType: string,
+  dataUrl: string,
+): Promise<string> {
+  const bytes = decodeDataUrl(dataUrl);
+  const isPdf =
+    mediaType.includes("pdf") || name.toLowerCase().endsWith(".pdf");
+  if (isPdf) {
+    const { extractText: extractPdfText, getDocumentProxy } = await import("unpdf");
+    const pdf = await getDocumentProxy(bytes);
+    const { text } = await extractPdfText(pdf, { mergePages: true });
+    return Array.isArray(text) ? text.join("\n") : text;
+  }
+  // Plain text / markdown / csv etc.
+  return new TextDecoder().decode(bytes);
+}
+
+/** Split text into overlapping chunks on paragraph/sentence boundaries. */
+function chunkText(text: string, maxLen = 1200, overlap = 150): string[] {
+  const clean = text.replace(/\r\n/g, "\n").replace(/[ \t]+/g, " ").trim();
+  if (!clean) return [];
+  const paragraphs = clean.split(/\n{2,}/);
+  const chunks: string[] = [];
+  let current = "";
+  for (const para of paragraphs) {
+    const p = para.trim();
+    if (!p) continue;
+    if ((current + "\n\n" + p).length > maxLen && current) {
+      chunks.push(current.trim());
+      current = current.slice(Math.max(0, current.length - overlap)) + "\n\n" + p;
+    } else {
+      current = current ? current + "\n\n" + p : p;
+    }
+    while (current.length > maxLen) {
+      chunks.push(current.slice(0, maxLen).trim());
+      current = current.slice(maxLen - overlap);
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+  return chunks;
+}
+
+export type IngestResult = {
+  fileName: string;
+  chunks: number;
+};
+
+export async function ingestHandbookFile(
+  file: { name: string; mediaType: string; dataUrl: string },
+  lovableApiKey: string,
+): Promise<IngestResult> {
+  const text = await extractText(file.name, file.mediaType, file.dataUrl);
+  const chunks = chunkText(text);
+  if (chunks.length === 0) {
+    throw new Error(`No readable text found in "${file.name}".`);
+  }
+
+  const admin = createClient(
+    process.env.LOFI_SUPABASE_URL!,
+    process.env.LOFI_SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+
+  const handbookName = file.name.replace(/\.[^.]+$/, "");
+  const rows: Record<string, unknown>[] = [];
+  for (let i = 0; i < chunks.length; i++) {
+    const embedding = await embedText(chunks[i], lovableApiKey);
+    rows.push({
+      handbook_name: handbookName,
+      section_citation: `${handbookName} — part ${i + 1}/${chunks.length}`,
+      content: chunks[i],
+      metadata: { source: file.name, chunk: i + 1, uploadedAt: new Date().toISOString() },
+      embedding: JSON.stringify(embedding),
+    });
+  }
+
+  // Insert in batches to keep payloads reasonable.
+  const batchSize = 20;
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const batch = rows.slice(i, i + batchSize);
+    const { error } = await admin.from("guideline_library").insert(batch);
+    if (error) throw new Error(`guideline_library insert failed: ${error.message}`);
+  }
+
+  return { fileName: file.name, chunks: chunks.length };
+}

@@ -315,3 +315,44 @@ Only state a detail if it appears in the provided context; never fabricate names
       throw new Error(e?.message || "Failed to analyze the scenario.");
     }
   });
+
+// ---------------------------------------------------------------------------
+// Handbook guideline upload (Admin Config). Admin-only: verifies the caller's
+// access token before ingesting files into the guideline library.
+// ---------------------------------------------------------------------------
+
+const UploadFileSchema = z.object({
+  name: z.string().min(1),
+  mediaType: z.string().default("application/octet-stream"),
+  dataUrl: z.string().min(1),
+});
+
+const UploadInputSchema = z.object({
+  accessToken: z.string().min(1),
+  files: z.array(UploadFileSchema).min(1).max(10),
+});
+
+export type UploadGuidelinesResult = {
+  results: { fileName: string; chunks: number }[];
+  totalChunks: number;
+};
+
+export const uploadGuidelines = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => UploadInputSchema.parse(data))
+  .handler(async ({ data }): Promise<UploadGuidelinesResult> => {
+    const { verifyAdminCaller } = await import("@/lib/auth.server");
+    await verifyAdminCaller(data.accessToken);
+
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("AI is not configured. Missing LOVABLE_API_KEY.");
+
+    const { ingestHandbookFile } = await import("@/lib/guidelines.server");
+
+    const results: { fileName: string; chunks: number }[] = [];
+    for (const file of data.files) {
+      const r = await ingestHandbookFile(file, key);
+      results.push(r);
+    }
+    const totalChunks = results.reduce((sum, r) => sum + r.chunks, 0);
+    return { results, totalChunks };
+  });
