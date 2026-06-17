@@ -108,6 +108,42 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
     }
   }
 
+  // Handbook upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadDone, setUploadDone] = useState<string | null>(null);
+
+  async function handleFiles(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    if (!accessToken) {
+      setUploadError("You must be signed in as an admin to upload.");
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    setUploadDone(null);
+    try {
+      const files = await Promise.all(
+        Array.from(fileList).map(async (f) => ({
+          name: f.name,
+          mediaType: f.type || "application/octet-stream",
+          dataUrl: await fileToDataUrl(f),
+        })),
+      );
+      const res = await uploadGuidelines({ data: { accessToken, files } });
+      setUploadDone(
+        `Added ${res.totalChunks} passage${res.totalChunks === 1 ? "" : "s"} from ${res.results.length} file${res.results.length === 1 ? "" : "s"}.`,
+      );
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 py-10"
