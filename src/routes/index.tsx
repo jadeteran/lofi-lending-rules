@@ -41,30 +41,38 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
+type Attachment = { name: string; mediaType: string; dataUrl: string };
+
+const ACCEPTED = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+
 function StudyCorner() {
   const analyze = useServerFn(analyzeScenario);
   const [loanType, setLoanType] = useState("");
   const [scenario, setScenario] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const mutation = useMutation({
-    mutationFn: (vars: { loanType: string; scenario: string; images: string[] }) =>
+    mutationFn: (vars: { loanType: string; scenario: string; attachments: Attachment[] }) =>
       analyze({ data: vars }),
   });
 
   const canSubmit =
     loanType.trim() !== "" &&
-    (scenario.trim() !== "" || images.length > 0) &&
+    (scenario.trim() !== "" || attachments.length > 0) &&
     !mutation.isPending;
 
   function readFiles(files: FileList | File[]) {
-    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const list = Array.from(files).filter((f) => ACCEPTED.includes(f.type));
     list.forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
         const url = reader.result as string;
-        setImages((prev) => (prev.length >= 6 ? prev : [...prev, url]));
+        setAttachments((prev) =>
+          prev.length >= 6
+            ? prev
+            : [...prev, { name: file.name, mediaType: file.type, dataUrl: url }],
+        );
       };
       reader.readAsDataURL(file);
     });
@@ -75,7 +83,7 @@ function StudyCorner() {
     if (!items) return;
     const files: File[] = [];
     for (const item of items) {
-      if (item.kind === "file" && item.type.startsWith("image/")) {
+      if (item.kind === "file" && ACCEPTED.includes(item.type)) {
         const f = item.getAsFile();
         if (f) files.push(f);
       }
@@ -83,14 +91,14 @@ function StudyCorner() {
     if (files.length > 0) readFiles(files);
   }
 
-  function removeImage(idx: number) {
-    setImages((prev) => prev.filter((_, i) => i !== idx));
+  function removeAttachment(idx: number) {
+    setAttachments((prev) => prev.filter((_, i) => i !== idx));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
-    mutation.mutate({ loanType, scenario: scenario.trim(), images });
+    mutation.mutate({ loanType, scenario: scenario.trim(), attachments });
   }
 
   const result = mutation.data;
@@ -132,19 +140,28 @@ function StudyCorner() {
           className="w-full resize-y rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold leading-relaxed text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)] placeholder:font-normal placeholder:text-[var(--lofi-muted)]"
         />
 
-        {images.length > 0 && (
+        {attachments.length > 0 && (
           <div className="flex flex-wrap gap-3">
-            {images.map((src, i) => (
+            {attachments.map((att, i) => (
               <div key={i} className="relative">
-                <img
-                  src={src}
-                  alt={`Attachment ${i + 1}`}
-                  className="h-20 w-20 rounded-xl border border-[var(--lofi-cream-deep)] object-cover shadow-[var(--lofi-shadow)]"
-                />
+                {att.mediaType.startsWith("image/") ? (
+                  <img
+                    src={att.dataUrl}
+                    alt={att.name}
+                    className="h-20 w-20 rounded-xl border border-[var(--lofi-cream-deep)] object-cover shadow-[var(--lofi-shadow)]"
+                  />
+                ) : (
+                  <div className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-1 text-center shadow-[var(--lofi-shadow)]">
+                    <span className="text-2xl">📄</span>
+                    <span className="w-full truncate text-[10px] font-semibold text-[var(--lofi-muted)]">
+                      {att.name}
+                    </span>
+                  </div>
+                )}
                 <button
                   type="button"
-                  onClick={() => removeImage(i)}
-                  aria-label="Remove image"
+                  onClick={() => removeAttachment(i)}
+                  aria-label="Remove attachment"
                   className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--lofi-blue-deep)] text-xs font-bold text-[var(--lofi-cream)] shadow-[var(--lofi-shadow)]"
                 >
                   ✕
@@ -157,7 +174,7 @@ function StudyCorner() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,application/pdf"
           multiple
           className="hidden"
           onChange={(e) => {
@@ -172,11 +189,12 @@ function StudyCorner() {
             onClick={() => fileInputRef.current?.click()}
             className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-5 py-3 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
           >
-            📎 Upload image
+            📎 Upload JPEG, PNG, or PDF
           </button>
           <span className="text-xs text-[var(--lofi-muted)]">
-            Paste images or text directly into the box · up to 6 images
+            Paste images/text or upload JPEG, PNG, PDF · up to 6 files
           </span>
+
 
           <button
             type="submit"

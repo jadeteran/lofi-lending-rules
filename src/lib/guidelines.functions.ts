@@ -21,14 +21,20 @@ export type Analysis = {
   documentation: string;
 };
 
+const AttachmentSchema = z.object({
+  name: z.string().default("attachment"),
+  mediaType: z.string().min(1),
+  dataUrl: z.string().min(1),
+});
+
 const InputSchema = z
   .object({
     loanType: z.string().min(1),
     scenario: z.string().default(""),
-    images: z.array(z.string()).max(6).default([]),
+    attachments: z.array(AttachmentSchema).max(6).default([]),
   })
-  .refine((d) => d.scenario.trim() !== "" || d.images.length > 0, {
-    message: "Add a scenario or attach an image.",
+  .refine((d) => d.scenario.trim() !== "" || d.attachments.length > 0, {
+    message: "Add a scenario or attach a file.",
   });
 
 export const analyzeScenario = createServerFn({ method: "POST" })
@@ -52,14 +58,20 @@ Each value must be a single string using "- " bullet lines separated by newlines
 
     try {
       const textPart = `Loan Program: ${data.loanType}\n\nScenario / Stipulation:\n${
-        data.scenario.trim() || "(See attached image(s) — extract the relevant stipulation or scenario details from them.)"
+        data.scenario.trim() || "(See attached file(s) — extract the relevant stipulation or scenario details from them.)"
       }`;
 
       const content: Array<
-        { type: "text"; text: string } | { type: "image"; image: string }
+        | { type: "text"; text: string }
+        | { type: "image"; image: string }
+        | { type: "file"; data: string; mediaType: string }
       > = [{ type: "text", text: textPart }];
-      for (const img of data.images) {
-        content.push({ type: "image", image: img });
+      for (const att of data.attachments) {
+        if (att.mediaType.startsWith("image/")) {
+          content.push({ type: "image", image: att.dataUrl });
+        } else {
+          content.push({ type: "file", data: att.dataUrl, mediaType: att.mediaType });
+        }
       }
 
       const { text } = await generateText({
