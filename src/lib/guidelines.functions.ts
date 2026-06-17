@@ -21,14 +21,20 @@ export type Analysis = {
   documentation: string;
 };
 
+const AttachmentSchema = z.object({
+  name: z.string().default("attachment"),
+  mediaType: z.string().min(1),
+  dataUrl: z.string().min(1),
+});
+
 const InputSchema = z
   .object({
     loanType: z.string().min(1),
     scenario: z.string().default(""),
-    images: z.array(z.string()).max(6).default([]),
+    attachments: z.array(AttachmentSchema).max(6).default([]),
   })
-  .refine((d) => d.scenario.trim() !== "" || d.images.length > 0, {
-    message: "Add a scenario or attach an image.",
+  .refine((d) => d.scenario.trim() !== "" || d.attachments.length > 0, {
+    message: "Add a scenario or attach a file.",
   });
 
 export const analyzeScenario = createServerFn({ method: "POST" })
