@@ -253,6 +253,14 @@ Only state a detail if it appears in the provided context; never fabricate names
           (groundingNotes
             ? `- Grounding sources limited this run: ${groundingNotes}`
             : "- No handbook citations returned for this scenario."),
+        recommendedProgram:
+          parsed.recommendedProgram?.trim() ||
+          (isProgramFinder ? "" : data.loanType),
+        recommendation:
+          parsed.recommendation?.trim() ||
+          (isProgramFinder
+            ? "- No program recommendation could be derived from the available data."
+            : "- N/A — program was specified by the loan officer."),
       };
     } catch (err) {
       const e = err as { statusCode?: number; message?: string };
