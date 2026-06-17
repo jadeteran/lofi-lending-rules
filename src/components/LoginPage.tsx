@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { useAuth } from "@/components/AuthProvider";
-import workspaceAsset from "@/assets/lofi-workspace.png.asset.json";
+import loginScene from "@/assets/lofi-login-scene.png.asset.json";
 import headphoneBadge from "@/assets/anime-headphone-badge.png.asset.json";
 
 const FONT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
