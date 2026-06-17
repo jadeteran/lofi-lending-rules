@@ -3,11 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
-import {
-  analyzeScenario,
-  LOAN_TYPES,
-  type Analysis,
-} from "@/lib/guidelines.functions";
+import { analyzeScenario, LOAN_TYPES } from "@/lib/guidelines.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
