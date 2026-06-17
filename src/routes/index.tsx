@@ -744,7 +744,7 @@ function HistoryDrawer({
               {similar.length > 0 && (
                 <section>
                   <h4 className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
-                    ✨ Similar Team Scenarios
+                    <Sparkles size={13} /> Similar Team Scenarios
                   </h4>
                   <ul className="flex flex-col gap-2">
                     {similar.map((item) => (
@@ -837,7 +837,7 @@ function HistoryCard({
       )}
       {group && group !== "Unclassified" && (
         <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lofi-blue)]/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--lofi-blue-deep)]">
-          <span aria-hidden>◆</span>
+          <Diamond size={10} aria-hidden />
           {group}
         </span>
       )}
@@ -865,10 +865,10 @@ function RecommendationCard({
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span
-          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
           style={{ backgroundColor: "var(--lofi-blue)" }}
         >
-          🧭 Program Finder — Top Recommendation
+          <Compass size={14} /> Program Finder — Top Recommendation
         </span>
         {program && (
           <span className="rounded-full bg-[var(--lofi-card)] px-3 py-1 text-sm font-extrabold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)]">
