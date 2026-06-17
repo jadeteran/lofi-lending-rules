@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation } from "@/lib/guidelines.functions";
+import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
