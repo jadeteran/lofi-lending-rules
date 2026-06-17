@@ -76,6 +76,8 @@ const PreviousReportSchema = z.object({
     loActions: "",
   }),
   citations: z.string().default(""),
+  recommendedProgram: z.string().default(""),
+  recommendation: z.string().default(""),
 });
 
 const InputSchema = z
