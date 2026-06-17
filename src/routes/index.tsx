@@ -694,7 +694,7 @@ function HistoryDrawer({
       <aside
         role="dialog"
         aria-label="Previous scenarios"
-        className={`fixed inset-y-0 left-0 z-50 flex w-full flex-col border-r border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)]/95 shadow-[var(--lofi-shadow)] backdrop-blur-xl transition-transform duration-300 ease-out sm:w-[400px] ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-full flex-col border-r border-[var(--lofi-glow-border)] bg-[var(--lofi-card)] shadow-[var(--lofi-shadow)] backdrop-blur-2xl transition-transform duration-300 ease-out sm:w-[400px] ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
