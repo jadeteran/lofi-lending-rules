@@ -15,11 +15,17 @@ export const LOAN_TYPES = [
   "Private Money / Hard Money",
 ] as const;
 
+export type Documentation = {
+  borrowerTasks: string;
+  collaboration: string;
+  loActions: string;
+};
+
 export type Analysis = {
   guidelineRequirements: string;
   roadblocks: string;
   ltv: string;
-  documentation: string;
+  documentation: Documentation;
 };
 
 const AttachmentSchema = z.object({
@@ -28,11 +34,21 @@ const AttachmentSchema = z.object({
   dataUrl: z.string().min(1),
 });
 
+const DocumentationSchema = z.object({
+  borrowerTasks: z.string().default(""),
+  collaboration: z.string().default(""),
+  loActions: z.string().default(""),
+});
+
 const PreviousReportSchema = z.object({
   guidelineRequirements: z.string().default(""),
   roadblocks: z.string().default(""),
   ltv: z.string().default(""),
-  documentation: z.string().default(""),
+  documentation: DocumentationSchema.default({
+    borrowerTasks: "",
+    collaboration: "",
+    loActions: "",
+  }),
 });
 
 const InputSchema = z
