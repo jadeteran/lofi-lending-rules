@@ -10,43 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiIntrospectRouteImport } from './routes/api/_introspect'
+import { Route as ApiPublicIntrospectRouteImport } from './routes/api/public.introspect'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiIntrospectRoute = ApiIntrospectRouteImport.update({
-  id: '/api/_introspect',
-  path: '/api',
+const ApiPublicIntrospectRoute = ApiPublicIntrospectRouteImport.update({
+  id: '/api/public/introspect',
+  path: '/api/public/introspect',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api': typeof ApiIntrospectRoute
+  '/api/public/introspect': typeof ApiPublicIntrospectRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api': typeof ApiIntrospectRoute
+  '/api/public/introspect': typeof ApiPublicIntrospectRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api/_introspect': typeof ApiIntrospectRoute
+  '/api/public/introspect': typeof ApiPublicIntrospectRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api'
+  fullPaths: '/' | '/api/public/introspect'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api'
-  id: '__root__' | '/' | '/api/_introspect'
+  to: '/' | '/api/public/introspect'
+  id: '__root__' | '/' | '/api/public/introspect'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiIntrospectRoute: typeof ApiIntrospectRoute
+  ApiPublicIntrospectRoute: typeof ApiPublicIntrospectRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,11 +58,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/_introspect': {
-      id: '/api/_introspect'
-      path: '/api'
-      fullPath: '/api'
-      preLoaderRoute: typeof ApiIntrospectRouteImport
+    '/api/public/introspect': {
+      id: '/api/public/introspect'
+      path: '/api/public/introspect'
+      fullPath: '/api/public/introspect'
+      preLoaderRoute: typeof ApiPublicIntrospectRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -70,7 +70,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiIntrospectRoute: ApiIntrospectRoute,
+  ApiPublicIntrospectRoute: ApiPublicIntrospectRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
