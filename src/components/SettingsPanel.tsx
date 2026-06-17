@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { X, BookOpen } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, BookOpen, Loader2, CheckCircle2, UploadCloud } from "lucide-react";
 
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -9,6 +9,16 @@ import {
   deleteUser,
   type ManagedUser,
 } from "@/lib/auth.functions";
+import { uploadGuidelines } from "@/lib/guidelines.functions";
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file."));
+    reader.readAsDataURL(file);
+  });
+}
 
 const inputCls =
   "rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-3 py-2.5 text-sm font-semibold text-[var(--lofi-ink)] outline-none transition focus:border-[var(--lofi-blue)] focus:ring-2 focus:ring-[var(--lofi-blue)]/40 placeholder:font-normal placeholder:text-[var(--lofi-muted)]";
