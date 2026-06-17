@@ -135,7 +135,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       const res = await uploadGuidelines({ data: { accessToken, files } });
       const supersedeNote =
         res.totalSuperseded > 0
-          ? ` Replaced ${res.totalSuperseded} older passage${res.totalSuperseded === 1 ? "" : "s"} — the new version now overrides any conflicting info.`
+          ? ` Overrode ${res.totalSuperseded} conflicting passage${res.totalSuperseded === 1 ? "" : "s"} — the rest of the handbook was left untouched.`
           : "";
       setUploadDone(
         `Added ${res.totalChunks} passage${res.totalChunks === 1 ? "" : "s"} from ${res.results.length} file${res.results.length === 1 ? "" : "s"}.${supersedeNote}`,
