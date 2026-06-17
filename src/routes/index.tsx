@@ -8,7 +8,6 @@ import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.f
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import workspaceAsset from "@/assets/lofi-workspace.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,7 +48,7 @@ function AuthGate() {
           background:
             "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
           color: "var(--lofi-muted)",
-          fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+  
         }}
       >
         <p className="animate-pulse text-sm">🎧 Tuning in…</p>
@@ -66,7 +65,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div
       className="min-h-screen"
       style={{
-        fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+
         background:
           "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
         color: "var(--lofi-ink)",
@@ -318,7 +317,7 @@ function StudyCorner() {
 
         <h1
           className="mt-2 text-4xl font-bold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl"
-          style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
+          
         >
           AI Guideline Assistant
         </h1>
@@ -413,7 +412,7 @@ function StudyCorner() {
             Paste images/text or upload JPEG, PNG, PDF · up to 6 files
           </span>
 
-          <div className="flex items-center gap-3" style={{ fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif" }}>
+          <div className="flex items-center gap-3">
             {(hasVersions || scenario.trim() !== "" || attachments.length > 0 || loanType !== "") && (
               <button
                 type="button"
@@ -585,28 +584,15 @@ function StudyCorner() {
         </div>
       ) : (
         !mutation.isError && (
-          <div className="relative mx-auto max-w-2xl text-center">
-            <div
-              className="overflow-hidden rounded-3xl border"
-              style={{
-                borderColor: "var(--lofi-glow-border)",
-                boxShadow: "var(--lofi-shadow)",
-                animation: "lofiFloat 6s ease-in-out infinite",
-              }}
-            >
-              <img
-                src={workspaceAsset.url}
-                alt="Cozy golden-hour lofi study workspace with headphones, plants and coffee"
-                className="h-64 w-full object-cover sm:h-80"
-              />
-            </div>
-            <p className="mt-6 text-3xl">☕</p>
-            <p className="mt-2 text-lg font-bold text-[var(--lofi-blue-deep)]">
+          <div className="mx-auto max-w-2xl py-16 text-center">
+            <p className="text-3xl">☕</p>
+            <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
               Queue the beats and drop a scenario to analyze…
             </p>
           </div>
         )
       )}
+
 
       <footer className="mt-14 text-center text-xs text-[var(--lofi-muted)]">
         AI-generated guidance — always verify against your investor overlays · stay cozy ✨

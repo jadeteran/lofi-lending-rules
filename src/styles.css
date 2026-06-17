@@ -132,40 +132,40 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
-/* ===== Warm Retro Lofi Anime theme (golden-hour latte workspace) ===== */
+/* ===== Light Iced-Latte theme (oat-milk ivory, espresso, sage) ===== */
 :root {
-  /* warm amber-tinted espresso canvas — lighter & warmer than near-black */
-  --lofi-bg-1: oklch(0.3 0.03 62);
-  --lofi-bg-2: oklch(0.37 0.045 68);
-  --lofi-bg-3: oklch(0.26 0.028 55);
+  /* creamy oat-milk ivory canvas */
+  --lofi-bg-1: oklch(0.985 0.008 85);
+  --lofi-bg-2: oklch(0.97 0.012 82);
+  --lofi-bg-3: oklch(0.955 0.016 80);
 
-  /* warm cream text + highlights */
-  --lofi-cream: oklch(0.96 0.035 88);
-  /* warm golden translucent border */
-  --lofi-cream-deep: oklch(0.85 0.08 78 / 0.22);
+  /* crisp surfaces + warm sand borders (#EAE3D2) */
+  --lofi-cream: oklch(0.995 0.004 90);
+  --lofi-cream-deep: oklch(0.9 0.025 84 / 0.9);
 
-  /* vibrant sunset gold / amber from the window light */
-  --lofi-blue: oklch(0.79 0.15 72);
-  --lofi-blue-deep: oklch(0.85 0.16 78);
+  /* iced-latte espresso accents (#C4A484 / #8B5A2B) */
+  --lofi-blue: oklch(0.74 0.06 70);
+  --lofi-blue-deep: oklch(0.52 0.08 60);
 
   /* warm tinted accent chips */
-  --lofi-lavender: oklch(0.64 0.1 48);
-  --lofi-peach: oklch(0.68 0.14 55);
-  --lofi-sage: oklch(0.62 0.08 110);
+  --lofi-lavender: oklch(0.6 0.06 55);
+  --lofi-peach: oklch(0.66 0.13 45);
+  /* plant accent green (#8FBC8F / #A9DFBF) */
+  --lofi-sage: oklch(0.74 0.07 150);
 
-  /* soft cream ink on the warm canvas */
-  --lofi-ink: oklch(0.95 0.035 84);
-  --lofi-muted: oklch(0.78 0.05 74);
+  /* deep espresso text (not pitch black) */
+  --lofi-ink: oklch(0.32 0.03 55);
+  --lofi-muted: oklch(0.52 0.025 58);
 
-  /* glassmorphism: warmer semi-transparent fill */
-  --lofi-card: oklch(0.36 0.04 66 / 0.5);
+  /* glassmorphism: crisp translucent white-cream fill */
+  --lofi-card: oklch(0.995 0.006 88 / 0.72);
 
-  /* golden-hour glow tokens */
-  --lofi-glow: oklch(0.82 0.16 75 / 0.35);
-  --lofi-glow-border: oklch(0.85 0.12 78 / 0.3);
+  /* soft, light-friendly glow tokens */
+  --lofi-glow: oklch(0.85 0.06 78 / 0.25);
+  --lofi-glow-border: oklch(0.85 0.04 78 / 0.55);
 
-  --lofi-shadow: 0 18px 45px -20px oklch(0.18 0.06 55 / 0.65),
-    0 0 38px -16px var(--lofi-glow);
+  --lofi-shadow: 0 16px 40px -22px oklch(0.55 0.06 60 / 0.3),
+    0 0 28px -18px var(--lofi-glow);
 }
 
 @layer base {
@@ -174,15 +174,21 @@
   }
 
   body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    letter-spacing: -0.005em;
     background-color: var(--lofi-bg-1);
     color: var(--lofi-ink);
     background-image:
       radial-gradient(900px 480px at 50% -12%, var(--lofi-glow) 0%, transparent 60%),
-      radial-gradient(1200px 700px at 80% 0%, oklch(0.4 0.05 70 / 0.4) 0%, transparent 55%);
+      radial-gradient(1200px 700px at 80% 0%, oklch(0.92 0.03 130 / 0.3) 0%, transparent 55%);
     background-attachment: fixed;
   }
 
-  /* Glassmorphism: blur the warm canvas behind translucent surfaces */
+  h1, h2, h3, h4, h5, h6, button, input, select, textarea, label {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  /* Glassmorphism: blur the bright canvas behind translucent surfaces */
   article,
   form select,
   form textarea,
