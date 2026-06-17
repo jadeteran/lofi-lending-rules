@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { useAuth } from "@/components/AuthProvider";
+import workspaceAsset from "@/assets/lofi-workspace.png.asset.json";
 
 const BG =
   "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)";
@@ -26,17 +27,37 @@ export function LoginPage() {
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center px-6"
+      className="min-h-screen"
       style={{
         background: BG,
         color: "var(--lofi-ink)",
         fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
       }}
     >
+      <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-8 px-6 py-10 lg:grid-cols-2 lg:gap-12">
+        {/* Left column — illustration */}
+        <div className="order-1 lg:order-none">
+          <div
+            className="overflow-hidden rounded-3xl border"
+            style={{
+              borderColor: "var(--lofi-glow-border)",
+              boxShadow: "var(--lofi-shadow)",
+            }}
+          >
+            <img
+              src={workspaceAsset.url}
+              alt="Cozy golden-hour lofi study workspace with headphones, plants and coffee"
+              className="h-48 w-full object-cover sm:h-72 lg:h-[34rem]"
+            />
+          </div>
+        </div>
+
+        {/* Right column — login card */}
+        <div className="order-2 flex items-center justify-center lg:order-none">
       <div
         className="w-full max-w-md rounded-3xl border p-8 backdrop-blur-md sm:p-10"
         style={{
-          borderColor: "var(--lofi-cream-deep)",
+          borderColor: "var(--lofi-glow-border)",
           background: "var(--lofi-card)",
           boxShadow: "var(--lofi-shadow)",
         }}
