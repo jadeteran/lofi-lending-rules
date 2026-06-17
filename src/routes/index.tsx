@@ -270,8 +270,34 @@ function StudyCorner() {
 
   return (
     <Shell>
+      <div className="mb-2 flex items-center justify-end gap-2">
+        {role === "admin" && (
+          <button
+            type="button"
+            onClick={() => setShowSettings(true)}
+            aria-label="Open settings"
+            title="Settings"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] text-lg shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
+          >
+            ⚙️
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          aria-label="Sign out"
+          title="Sign out"
+          className="flex h-10 items-center justify-center gap-1.5 rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] backdrop-blur-md transition hover:-translate-y-0.5"
+        >
+          ⏏ Sign out
+        </button>
+      </div>
+      {showSettings && role === "admin" && (
+        <SettingsPanel onClose={() => setShowSettings(false)} />
+      )}
       <header className="mb-10 text-center">
         <p className="text-3xl">🎧</p>
+
         <h1
           className="mt-2 text-4xl font-bold tracking-tight text-[var(--lofi-blue-deep)] sm:text-5xl"
           style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
