@@ -53,13 +53,13 @@ function AuthGate() {
       <div
         className="flex min-h-screen items-center justify-center"
         style={{
-          background:
-            "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
+          background: "var(--lofi-bg-1)",
           color: "var(--lofi-muted)",
-  
         }}
       >
-        <p className="animate-pulse text-sm">🎧 Tuning in…</p>
+        <p className="flex animate-pulse items-center gap-2 text-sm">
+          <Headphones size={16} /> Tuning in…
+        </p>
       </div>
     );
   }
@@ -71,15 +71,26 @@ function AuthGate() {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="min-h-screen"
+      className="relative min-h-screen"
       style={{
-
-        background:
-          "radial-gradient(1200px 600px at 50% -10%, var(--lofi-bg-2) 0%, var(--lofi-bg-1) 45%, var(--lofi-bg-3) 100%)",
+        backgroundColor: "var(--lofi-bg-1)",
         color: "var(--lofi-ink)",
       }}
     >
-      <div className="mx-auto max-w-5xl px-6 py-16 sm:px-10 sm:py-20">{children}</div>
+      {/* Single massive standalone anime hero — no tiling, no patterns */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundColor: "var(--lofi-bg-1)",
+          backgroundImage: `url(${heroHeadphones.url})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center 22%",
+          backgroundSize: "min(90vw, 820px)",
+          opacity: 0.14,
+        }}
+      />
+      <div className="relative z-10 mx-auto max-w-5xl px-6 py-16 sm:px-10 sm:py-20">{children}</div>
     </div>
   );
 }
