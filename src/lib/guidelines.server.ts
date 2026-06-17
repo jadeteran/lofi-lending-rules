@@ -241,14 +241,13 @@ export async function ingestHandbookFile(
     embeddings.push(await embedText(chunks[i], lovableApiKey));
   }
 
-  // Selective supersede: instead of wiping the entire handbook, only remove the
-  // existing passages that the new content actually conflicts with / overlaps.
-  // For each incoming chunk we find the closest existing passages via vector
-  // similarity and supersede only those above a high threshold. This lets an
-  // agency update override the specific guidance it touches while leaving the
-  // rest of the handbook intact.
+  // Selective supersede, scoped to THIS handbook only. Re-uploading the same
+  // document replaces the specific passages it conflicts with / overlaps, while
+  // every OTHER handbook (e.g. Fannie, FHA, Freddie) is left completely
+  // untouched. This guarantees an upload of one agency's update can never wipe
+  // or shrink another agency's guidance.
   const SUPERSEDE_THRESHOLD = 0.86; // cosine similarity — near-duplicate / same topic
-  const idsToSupersede = new Set<string>();
+  const candidateIds = new Set<string>();
   for (const embedding of embeddings) {
     const { data: matches, error: matchError } = await admin.rpc("match_guidelines", {
       query_embedding: JSON.stringify(embedding),
@@ -260,18 +259,31 @@ export async function ingestHandbookFile(
     for (const m of matches ?? []) {
       const sim = typeof m.similarity === "number" ? m.similarity : 0;
       if (sim >= SUPERSEDE_THRESHOLD && m.id != null) {
-        idsToSupersede.add(String(m.id));
+        candidateIds.add(String(m.id));
       }
     }
   }
 
+  // Restrict supersede candidates to rows that belong to the SAME handbook.
+  let idsToSupersede: string[] = [];
+  if (candidateIds.size > 0) {
+    const { data: sameHandbookRows, error: scopeError } = await admin
+      .from("guideline_library")
+      .select("id")
+      .eq("handbook_name", handbookName)
+      .in("id", Array.from(candidateIds));
+    if (scopeError) {
+      throw new Error(`Conflict scoping failed: ${scopeError.message}`);
+    }
+    idsToSupersede = (sameHandbookRows ?? []).map((r) => String(r.id));
+  }
+
   let supersededRows = 0;
-  if (idsToSupersede.size > 0) {
-    const ids = Array.from(idsToSupersede);
+  if (idsToSupersede.length > 0) {
     const { data: oldRows, error: deleteError } = await admin
       .from("guideline_library")
       .delete()
-      .in("id", ids)
+      .in("id", idsToSupersede)
       .select("id");
     if (deleteError) {
       throw new Error(`Failed to supersede conflicting passages: ${deleteError.message}`);
