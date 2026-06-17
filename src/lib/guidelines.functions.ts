@@ -4,7 +4,10 @@ import { generateText } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 
+export const PROGRAM_FINDER = "Unsure / Program Finder" as const;
+
 export const LOAN_TYPES = [
+  PROGRAM_FINDER,
   "Conventional - Fannie Mae",
   "Conventional - Freddie Mac",
   "Government - FHA",
@@ -38,6 +41,8 @@ export type Analysis = {
   alternatives: AlternativeProgram[];
   documentation: Documentation;
   citations: string;
+  recommendedProgram: string;
+  recommendation: string;
 };
 
 const AttachmentSchema = z.object({
@@ -71,6 +76,8 @@ const PreviousReportSchema = z.object({
     loActions: "",
   }),
   citations: z.string().default(""),
+  recommendedProgram: z.string().default(""),
+  recommendation: z.string().default(""),
 });
 
 const InputSchema = z
@@ -94,6 +101,7 @@ export const analyzeScenario = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(key);
 
     const isOverride = data.mode === "override" && !!data.previousReport;
+    const isProgramFinder = data.loanType === PROGRAM_FINDER;
 
     // ---- Hybrid grounding: curated locked rules (#3) + handbook RAG (#1) ----
     const groundingQuery = `${data.loanType}\n\n${data.scenario.trim()}`.trim();
@@ -117,12 +125,20 @@ export const analyzeScenario = createServerFn({ method: "POST" })
 
     const groundingNotes = grounding.notes.length ? grounding.notes.join(" ") : "";
 
-    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, and citations. Do not wrap the response in markdown code blocks like \`\`\`json.
+    const system = `You are a senior mortgage underwriting and re-evaluation engine. You must respond with raw JSON matching the exact requested keys: guidelineRequirements, roadblocks, ltv, alternatives, documentation, citations, recommendedProgram, and recommendation. Do not wrap the response in markdown code blocks like \`\`\`json.
 
-You specialize in the "${data.loanType}" loan program. ${
-      isOverride
-        ? "You are RE-EVALUATING an existing loan file analysis report. The user is supplying updated live context or operational overrides. Treat the new context as authoritative, overriding facts. Remove any roadblock the new context invalidates (e.g. switching from cash-out to rate-and-term removes cash-out overlays), recalculate the maximum allowable LTV/CLTV thresholds for the new posture, and regenerate the documentation checklist to match. Return the COMPLETE refreshed report — not a diff."
-        : "Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance."
+${
+      isProgramFinder
+        ? `PROGRAM FINDER MODE: The loan officer is UNSURE which program fits and wants you to find it. Do NOT assume a program. Using ONLY the grounding sources below, evaluate the raw borrower scenario against every program represented in the data WITHOUT any pre-filter, then systematically identify and RANK the top 3 most viable matching loan programs. Choose the single best-fit program as your #1 recommendation. Populate "guidelineRequirements", "roadblocks", "ltv", and "documentation" specifically for that #1 recommended program (as if it were the chosen program). Put the recommended program name in "recommendedProgram". The "alternatives" array must contain the ranked programs you considered (the #1 recommendation first, then the runners-up and any rejected programs), so the ranking is visible. ${
+            isOverride
+              ? "You are RE-EVALUATING an existing program-finder report with updated authoritative context — re-rank the programs from scratch and return the COMPLETE refreshed report, not a diff."
+              : ""
+          }`
+        : `You specialize in the "${data.loanType}" loan program. ${
+            isOverride
+              ? "You are RE-EVALUATING an existing loan file analysis report. The user is supplying updated live context or operational overrides. Treat the new context as authoritative, overriding facts. Remove any roadblock the new context invalidates (e.g. switching from cash-out to rate-and-term removes cash-out overlays), recalculate the maximum allowable LTV/CLTV thresholds for the new posture, and regenerate the documentation checklist to match. Return the COMPLETE refreshed report — not a diff."
+              : "Analyze the scenario or underwriter stipulation a loan processor describes and give precise, program-specific guidance."
+          } Set "recommendedProgram" to "${data.loanType}".`
     } Be concrete and practical.
 
 === GROUNDING SOURCES (authoritative — you MUST use these) ===
@@ -158,8 +174,10 @@ The JSON object must have exactly these keys:
     - "collaboration": items the borrower must help obtain or sign together with the LO (e.g. signing the final URLA/HUD forms, subordination agreements, updated HOI declarations needing the borrower's insurer).
     - "loActions": pure LO / internal broker actions handled internally (e.g. revised worksheets, rate lock confirmation, internal recalculations).
 - "citations": (string) the actual handbook citations and locked-rule references you relied on, as "- " bullet lines. Each bullet should pair a specific claim/number with its source, e.g. "- Max base loan amount $177,570 — per lofi_guidelines FHA Streamline rule" or "- 210-day seasoning requirement — FHA Handbook 4000.1 II.A.8.d (retrieved passage)". Use ONLY the CITATION labels supplied in the GROUNDING SOURCES; if a source was unavailable this run, say so here. Never fabricate section numbers.
+- "recommendedProgram": (string) the single best-fit program name. ${isProgramFinder ? 'In Program Finder mode this is your #1 ranked program.' : `Set this to "${data.loanType}".`}
+- "recommendation": (string) ${isProgramFinder ? 'a summary, as "- " bullet lines, explaining WHY the #1 recommended program wins over the rejected/runner-up alternatives — reference the specific scenario facts and locked rules that make it the best fit and that disqualify or weaken the others (e.g. "- FHA Streamline wins: no appraisal needed and borrower has 0x30 mortgage history, while Conventional R&T is capped by the 95% LTV on the current value").' : 'a brief "- " bullet summary of why this chosen program fits the scenario. If not applicable, set to "- N/A — program was specified by the loan officer.".'}
 
-The string values (guidelineRequirements, roadblocks, ltv, citations) and each of the three documentation bucket values must be a single string using "- " bullet lines separated by newlines. If a documentation bucket has no items, set it to "- None for this scenario.". Output nothing outside the JSON object.
+The string values (guidelineRequirements, roadblocks, ltv, citations, recommendation) and each of the three documentation bucket values must be a single string using "- " bullet lines separated by newlines. If a documentation bucket has no items, set it to "- None for this scenario.". Output nothing outside the JSON object.
 
 CRITICAL — documentation specificity (do NOT use generic document templates). Mine the scenario, loan application data, and any attached files for concrete details and inject them into every documentation bullet:
 1. Assets & Income: Never write a bare "bank statements" or "paystubs". Always attach the exact timeline constraint, e.g. "Most recent 30 consecutive days of paystubs" or "Last 2 full months of bank statements, all pages included". Tie cash-to-close, reserves, or seasoning amounts to the specific dollar figures when present.
@@ -235,6 +253,14 @@ Only state a detail if it appears in the provided context; never fabricate names
           (groundingNotes
             ? `- Grounding sources limited this run: ${groundingNotes}`
             : "- No handbook citations returned for this scenario."),
+        recommendedProgram:
+          parsed.recommendedProgram?.trim() ||
+          (isProgramFinder ? "" : data.loanType),
+        recommendation:
+          parsed.recommendation?.trim() ||
+          (isProgramFinder
+            ? "- No program recommendation could be derived from the available data."
+            : "- N/A — program was specified by the loan officer."),
       };
     } catch (err) {
       const e = err as { statusCode?: number; message?: string };

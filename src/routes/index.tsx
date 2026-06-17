@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
+import { analyzeScenario, LOAN_TYPES, PROGRAM_FINDER, type Analysis, type Documentation, type AlternativeProgram } from "@/lib/guidelines.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,7 +65,7 @@ function timeOf(ts: number) {
 
 function StudyCorner() {
   const analyze = useServerFn(analyzeScenario);
-  const [loanType, setLoanType] = useState("");
+  const [loanType, setLoanType] = useState<string>(PROGRAM_FINDER);
   const [scenario, setScenario] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [versions, setVersions] = useState<Version[]>([]);
@@ -178,7 +178,6 @@ function StudyCorner() {
           onChange={(e) => setLoanType(e.target.value)}
           className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]"
         >
-          <option value="">Select a loan program…</option>
           {LOAN_TYPES.map((t) => (
             <option key={t} value={t}>
               {t}
@@ -321,6 +320,14 @@ function StudyCorner() {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
+              {current.report.recommendation &&
+                current.report.recommendation.trim() !==
+                  "- N/A — program was specified by the loan officer." && (
+                  <RecommendationCard
+                    program={current.report.recommendedProgram}
+                    recommendation={current.report.recommendation}
+                  />
+                )}
               <ResultCard title="Guideline Requirements" emoji="📋" text={current.report.guidelineRequirements} accent="lavender" />
               <ResultCard title="Potential Roadblocks" emoji="🚧" text={current.report.roadblocks} accent="peach" />
               <ResultCard title="LTV / Eligibility" emoji="📊" text={current.report.ltv} accent="blue" />
@@ -397,6 +404,47 @@ function StudyCorner() {
     </Shell>
   );
 }
+
+function RecommendationCard({
+  program,
+  recommendation,
+}: {
+  program: string;
+  recommendation: string;
+}) {
+  return (
+    <article
+      className="flex flex-col rounded-3xl border-2 p-7 shadow-[var(--lofi-shadow)]"
+      style={{
+        borderColor: "var(--lofi-blue)",
+        background:
+          "linear-gradient(150deg, var(--lofi-card) 0%, var(--lofi-blue) 220%)",
+      }}
+    >
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span
+          className="rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          style={{ backgroundColor: "var(--lofi-blue)" }}
+        >
+          🧭 Program Finder — Top Recommendation
+        </span>
+        {program && (
+          <span className="rounded-full bg-[var(--lofi-card)] px-3 py-1 text-sm font-extrabold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)]">
+            {program}
+          </span>
+        )}
+      </div>
+      <p className="mb-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+        Why this program wins
+      </p>
+      <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+        {recommendation}
+      </p>
+    </article>
+  );
+}
+
+
 
 function ResultCard({
   title,
