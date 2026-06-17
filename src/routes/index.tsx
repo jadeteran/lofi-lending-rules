@@ -341,6 +341,14 @@ function StudyCorner() {
         </span>
       </div>
 
+      <RecentHistory
+        items={historyQuery.data ?? []}
+        open={showHistory}
+        onToggle={() => setShowHistory((s) => !s)}
+        onPick={loadFromHistory}
+      />
+
+
       {mutation.isError && (
         <div className="mb-6 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
           <p className="text-lg font-bold text-[var(--lofi-blue-deep)]">
