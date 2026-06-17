@@ -51,10 +51,19 @@ const DocumentationSchema = z.object({
   loActions: z.string().default(""),
 });
 
+const AlternativeProgramSchema = z.object({
+  program: z.string().default(""),
+  status: z.string().default(""),
+  ltvCap: z.string().default(""),
+  benefit: z.string().default(""),
+  vulnerability: z.string().default(""),
+});
+
 const PreviousReportSchema = z.object({
   guidelineRequirements: z.string().default(""),
   roadblocks: z.string().default(""),
   ltv: z.string().default(""),
+  alternatives: z.array(AlternativeProgramSchema).default([]),
   documentation: DocumentationSchema.default({
     borrowerTasks: "",
     collaboration: "",
