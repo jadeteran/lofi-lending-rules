@@ -485,6 +485,84 @@ function StudyCorner() {
   );
 }
 
+function RecentHistory({
+  items,
+  open,
+  onToggle,
+  onPick,
+}: {
+  items: HistoryItem[];
+  open: boolean;
+  onToggle: () => void;
+  onPick: (item: HistoryItem) => void;
+}) {
+  if (items.length === 0) return null;
+
+  function whenOf(iso: string) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return (
+    <section className="mb-10 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-5 shadow-[var(--lofi-shadow)]">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between text-left"
+      >
+        <h3 className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+          🕑 Recent History
+          <span className="rounded-full bg-[var(--lofi-blue)] px-2 py-0.5 text-[10px] text-[var(--lofi-blue-deep)]">
+            {items.length}
+          </span>
+        </h3>
+        <span className="text-xs font-bold text-[var(--lofi-muted)]">
+          {open ? "Hide" : "Show"}
+        </span>
+      </button>
+
+      {open && (
+        <ul className="mt-4 flex flex-col gap-1.5">
+          {items.map((item) => {
+            const title =
+              item.rawScenario.trim().replace(/\s+/g, " ").slice(0, 80) ||
+              item.analysis?.recommendedProgram ||
+              "Saved scenario";
+            return (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => onPick(item)}
+                  className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[var(--lofi-blue)]/15"
+                >
+                  <span className="flex-1 truncate text-sm font-semibold text-[var(--lofi-ink)]">
+                    {title}
+                    {item.rawScenario.length > 80 ? "…" : ""}
+                  </span>
+                  <span className="shrink-0 rounded-full border border-[var(--lofi-cream-deep)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--lofi-blue-deep)]">
+                    {item.selectedProgram || "—"}
+                  </span>
+                  <span className="hidden shrink-0 text-[11px] text-[var(--lofi-muted)] sm:block">
+                    {whenOf(item.updatedAt)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+
 function RecommendationCard({
   program,
   recommendation,
