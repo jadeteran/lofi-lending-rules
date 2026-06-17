@@ -21,10 +21,15 @@ export type Analysis = {
   documentation: string;
 };
 
-const InputSchema = z.object({
-  loanType: z.string().min(1),
-  scenario: z.string().min(1),
-});
+const InputSchema = z
+  .object({
+    loanType: z.string().min(1),
+    scenario: z.string().default(""),
+    images: z.array(z.string()).max(6).default([]),
+  })
+  .refine((d) => d.scenario.trim() !== "" || d.images.length > 0, {
+    message: "Add a scenario or attach an image.",
+  });
 
 export const analyzeScenario = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
@@ -46,10 +51,21 @@ The JSON object must have exactly these string keys:
 Each value must be a single string using "- " bullet lines separated by newlines. Output nothing outside the JSON object.`;
 
     try {
+      const textPart = `Loan Program: ${data.loanType}\n\nScenario / Stipulation:\n${
+        data.scenario.trim() || "(See attached image(s) — extract the relevant stipulation or scenario details from them.)"
+      }`;
+
+      const content: Array<
+        { type: "text"; text: string } | { type: "image"; image: string }
+      > = [{ type: "text", text: textPart }];
+      for (const img of data.images) {
+        content.push({ type: "image", image: img });
+      }
+
       const { text } = await generateText({
         model: gateway("google/gemini-3-flash-preview"),
         system,
-        prompt: `Loan Program: ${data.loanType}\n\nScenario / Stipulation:\n${data.scenario}`,
+        messages: [{ role: "user", content }],
       });
 
       const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
