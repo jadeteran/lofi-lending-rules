@@ -140,6 +140,7 @@ function StudyCorner() {
         .catch(() => {});
       setScenario("");
       setAttachments([]);
+      setLastProgram(vars.loanType);
     },
   });
 
