@@ -133,8 +133,12 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         })),
       );
       const res = await uploadGuidelines({ data: { accessToken, files } });
+      const supersedeNote =
+        res.totalSuperseded > 0
+          ? ` Replaced ${res.totalSuperseded} older passage${res.totalSuperseded === 1 ? "" : "s"} — the new version now overrides any conflicting info.`
+          : "";
       setUploadDone(
-        `Added ${res.totalChunks} passage${res.totalChunks === 1 ? "" : "s"} from ${res.results.length} file${res.results.length === 1 ? "" : "s"}.`,
+        `Added ${res.totalChunks} passage${res.totalChunks === 1 ? "" : "s"} from ${res.results.length} file${res.results.length === 1 ? "" : "s"}.${supersedeNote}`,
       );
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : "Upload failed.");
@@ -333,6 +337,9 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                 : "Drag & drop files here, or click to browse. PDF, TXT, MD, CSV."}
             </p>
           </button>
+          <p className="mt-2 text-xs text-[var(--lofi-muted)]">
+            Re-uploading a file with the same name replaces its previous version, so newer guidance always overrides conflicting older info.
+          </p>
           {uploadDone && (
             <p className="mt-2 text-xs font-semibold text-[var(--lofi-blue-deep)]">{uploadDone}</p>
           )}
