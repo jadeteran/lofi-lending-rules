@@ -21,10 +21,21 @@ export type Documentation = {
   loActions: string;
 };
 
+export type AlternativeStatus = "Eligible" | "Likely Eligible" | "High Risk" | "Ineligible";
+
+export type AlternativeProgram = {
+  program: string;
+  status: AlternativeStatus;
+  ltvCap: string;
+  benefit: string;
+  vulnerability: string;
+};
+
 export type Analysis = {
   guidelineRequirements: string;
   roadblocks: string;
   ltv: string;
+  alternatives: AlternativeProgram[];
   documentation: Documentation;
 };
 
