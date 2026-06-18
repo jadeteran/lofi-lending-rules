@@ -435,8 +435,8 @@ function StudyCorner() {
           <button
             type="button"
             onClick={handleTranslate}
-            disabled={scenario.trim() === "" || translateMutation.isPending}
-            title="Translate the conditions in the box into plain English"
+            disabled={!canTranslate}
+            title="Translate the conditions (typed or pasted as a screenshot) into plain English"
             className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--lofi-blue-deep)]/30 bg-[var(--lofi-card)] px-5 py-3.5 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
             <Languages size={16} />
