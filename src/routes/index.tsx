@@ -1296,7 +1296,7 @@ function ConditionCard({
   activeId: string | null;
 }) {
   const id = `condition-${index}`;
-  const value = `Condition: ${condition.title}\n\nOriginal:\n${condition.original}\n\nPlain English:\n${condition.plainEnglish}\n\nWhat to do:\n${condition.whatToDo}`;
+  const value = `Condition: ${condition.title}\n\nOriginal:\n${condition.original}\n\nPlain English:\n${condition.plainEnglish}\n\nWhy they ask:\n${condition.reason}\n\nDocs to provide:\n${condition.docsToProvide}\n\nImportant details:\n${condition.keyDetails}`;
   return (
     <article
       {...cardClickProps({ id, label: condition.title, value }, onOpenChat)}
@@ -1325,11 +1325,25 @@ function ConditionCard({
         {condition.plainEnglish}
       </p>
 
+      <p className="mb-1 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+        <BookOpen size={13} /> Why they ask for this
+      </p>
+      <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+        {condition.reason}
+      </p>
+
       <p className="mb-1.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
-        <ListChecks size={13} /> What to do
+        <FolderOpen size={13} /> Documents to provide
+      </p>
+      <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+        {condition.docsToProvide}
+      </p>
+
+      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+        <ListChecks size={13} /> Important details &amp; requirements
       </p>
       <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
-        {condition.whatToDo}
+        {condition.keyDetails}
       </p>
     </article>
   );
