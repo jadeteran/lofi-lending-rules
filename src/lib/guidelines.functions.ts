@@ -449,3 +449,92 @@ ${reportJson}
       throw new Error(`Assistant error: ${msg.slice(0, 200)}`);
     }
   });
+
+// ---------------------------------------------------------------------------
+// Plain-English condition translator. Takes raw underwriting conditions (often
+// dense lender/UW jargon) and returns clear, actionable plain-English cards.
+// ---------------------------------------------------------------------------
+
+const TranslateInputSchema = z.object({
+  conditions: z.string().min(1, "Paste the conditions to translate."),
+  loanType: z.string().default(""),
+});
+
+export type TranslatedCondition = {
+  title: string;
+  original: string;
+  plainEnglish: string;
+  whatToDo: string;
+};
+
+const TranslatedConditionSchema = z.object({
+  title: z.string().default(""),
+  original: z.string().default(""),
+  plainEnglish: z.string().default(""),
+  whatToDo: z.string().default(""),
+});
+
+export const translateConditions = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => TranslateInputSchema.parse(data))
+  .handler(async ({ data }): Promise<{ conditions: TranslatedCondition[] }> => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("AI is not configured. Missing LOVABLE_API_KEY.");
+
+    const gateway = createLovableAiGatewayProvider(key);
+
+    const system = `You are a mortgage underwriting translator. A loan officer pastes raw underwriting/lender CONDITIONS — often dense jargon, abbreviations, and boilerplate — and you translate each one into clear plain English a borrower or junior LO can understand.
+
+Respond with raw JSON only (no markdown fences). The JSON must be an object with a single key "conditions" whose value is an array. Split the pasted text into individual conditions (one object per distinct condition/stipulation). Each array item is an object with exactly these string keys:
+- "title": a short 3-7 word label naming the condition (e.g. "Most Recent Pay Stubs").
+- "original": the original condition text, lightly cleaned up but faithful to the source wording.
+- "plainEnglish": a clear 1-3 sentence plain-English explanation of what the condition actually means and why the lender is asking for it. No jargon.
+- "whatToDo": "- " bullet lines listing the concrete next action(s) to satisfy this condition, naming any specific doc, date, amount, or party mentioned in the source.
+
+${data.loanType ? `The loan program is "${data.loanType}" — keep translations relevant to it.` : ""}
+Only use details present in the pasted text; never invent figures, names, or dates. Output nothing outside the JSON object.`;
+
+    try {
+      const { text } = await generateText({
+        model: gateway("google/gemini-3-flash-preview"),
+        system,
+        messages: [
+          {
+            role: "user",
+            content: `Conditions to translate:\n\n${data.conditions.trim()}`,
+          },
+        ],
+      });
+
+      const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+      const start = cleaned.indexOf("{");
+      const end = cleaned.lastIndexOf("}");
+      const jsonStr = start !== -1 && end !== -1 ? cleaned.slice(start, end + 1) : cleaned;
+
+      const parsed = JSON.parse(jsonStr) as { conditions?: unknown[] };
+      const conditions = Array.isArray(parsed.conditions)
+        ? parsed.conditions.map((c) => {
+            const v = TranslatedConditionSchema.parse(c ?? {});
+            return {
+              title: v.title.trim() || "Condition",
+              original: v.original.trim() || "—",
+              plainEnglish: v.plainEnglish.trim() || "No translation returned.",
+              whatToDo: v.whatToDo.trim() || "- Verify this condition with your underwriter.",
+            };
+          })
+        : [];
+
+      if (conditions.length === 0) {
+        throw new Error("No conditions could be parsed from that text.");
+      }
+      return { conditions };
+    } catch (err) {
+      const e = err as { statusCode?: number; message?: string };
+      if (e?.statusCode === 429) {
+        throw new Error("The studio is busy — too many requests. Take a sip and try again shortly.");
+      }
+      if (e?.statusCode === 402) {
+        throw new Error("AI credits are exhausted. Add credits in Settings → Workspace → Usage.");
+      }
+      throw new Error(e?.message || "Failed to translate the conditions.");
+    }
+  });

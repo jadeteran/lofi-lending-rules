@@ -6,10 +6,10 @@ import {
   Clock, Settings, LogOut, Paperclip, Sparkles, Check, X, ArrowRight,
   FileText, Diamond, ClipboardList, Construction, BarChart3, BookOpen,
   Compass, Shuffle, FolderOpen, Briefcase, Hand, Handshake, Headphones,
-  CheckCircle2, Circle, AlertTriangle, Ban, type LucideIcon,
+  CheckCircle2, Circle, AlertTriangle, Ban, Languages, ListChecks, type LucideIcon,
 } from "lucide-react";
 
-import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage } from "@/lib/guidelines.functions";
+import { analyzeScenario, translateConditions, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage, type TranslatedCondition } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
 import { CardChatPopover, type ActiveCard, type ReportContext } from "@/components/ReportCardChat";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
@@ -124,6 +124,7 @@ function StudyCorner() {
   const { role, signOut } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
   const analyze = useServerFn(analyzeScenario);
+  const translate = useServerFn(translateConditions);
   const saveFn = useServerFn(saveScenario);
   const listFn = useServerFn(listScenarios);
   const [loanType, setLoanType] = useState<string>("");
@@ -142,6 +143,27 @@ function StudyCorner() {
   const [activeCard, setActiveCard] = useState<ActiveCard | null>(null);
   const [chatHistories, setChatHistories] = useState<Record<string, ReportChatMessage[]>>({});
   const [chatInsights, setChatInsights] = useState<Record<string, string>>({});
+
+  // Plain-English condition translator.
+  const [translations, setTranslations] = useState<TranslatedCondition[] | null>(null);
+  const [translatedFrom, setTranslatedFrom] = useState("");
+
+  const translateMutation = useMutation({
+    mutationFn: (vars: { conditions: string; loanType: string }) => translate({ data: vars }),
+    onSuccess: (res, vars) => {
+      setTranslations(res.conditions);
+      setTranslatedFrom(vars.conditions);
+      setActiveCard(null);
+      if (typeof window !== "undefined") {
+        setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 60);
+      }
+    },
+  });
+
+  function handleTranslate() {
+    if (scenario.trim() === "" || translateMutation.isPending) return;
+    translateMutation.mutate({ conditions: scenario.trim(), loanType });
+  }
 
   function openCardChat(payload: ActiveCard) {
     setActiveCard((prev) => (prev?.id === payload.id ? null : payload));
@@ -239,6 +261,9 @@ function StudyCorner() {
     setVersions([]);
     setSelected(0);
     setLastProgram(null);
+    setTranslations(null);
+    setTranslatedFrom("");
+    translateMutation.reset();
     mutation.reset();
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -306,12 +331,20 @@ function StudyCorner() {
     setActiveCard(null);
   }, [selected]);
 
-  const reportContext: ReportContext = {
-    loanType,
-    scenario,
-    versionLabel: current ? (current.isBase ? "Base analysis" : current.label) : "",
-    report: (current?.report ?? {}) as unknown as Record<string, unknown>,
-  };
+  const isTranslationCard = activeCard?.id?.startsWith("condition-") ?? false;
+  const reportContext: ReportContext = isTranslationCard
+    ? {
+        loanType,
+        scenario: translatedFrom,
+        versionLabel: "Plain-English Conditions",
+        report: { conditions: translations ?? [] } as unknown as Record<string, unknown>,
+      }
+    : {
+        loanType,
+        scenario,
+        versionLabel: current ? (current.isBase ? "Base analysis" : current.label) : "",
+        report: (current?.report ?? {}) as unknown as Record<string, unknown>,
+      };
 
 
 
@@ -382,18 +415,31 @@ function StudyCorner() {
       </header>
 
       <form onSubmit={handleSubmit} className="mb-10 flex flex-col gap-4">
-        <Select value={loanType || undefined} onValueChange={setLoanType}>
-          <SelectTrigger className="h-auto rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]">
-            <SelectValue placeholder="Select an option…" />
-          </SelectTrigger>
-          <SelectContent>
-            {LOAN_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+          <Select value={loanType || undefined} onValueChange={setLoanType}>
+            <SelectTrigger className="h-auto w-full flex-1 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]">
+              <SelectValue placeholder="Select an option…" />
+            </SelectTrigger>
+            <SelectContent>
+              {LOAN_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <button
+            type="button"
+            onClick={handleTranslate}
+            disabled={scenario.trim() === "" || translateMutation.isPending}
+            title="Translate the conditions in the box into plain English"
+            className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--lofi-blue-deep)]/30 bg-[var(--lofi-card)] px-5 py-3.5 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          >
+            <Languages size={16} />
+            {translateMutation.isPending ? "Translating…" : "Translate Conditions"}
+          </button>
+        </div>
+
 
         <textarea
           value={scenario}
@@ -524,6 +570,70 @@ function StudyCorner() {
             {(mutation.error as Error).message}
           </p>
         </div>
+      )}
+
+      {translateMutation.isError && (
+        <div className="mb-6 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
+          <p className="flex items-center justify-center gap-2 text-lg font-bold text-[var(--lofi-blue-deep)]">
+            Couldn't translate that <Headphones size={18} />
+          </p>
+          <p className="mt-2 text-sm text-[var(--lofi-muted)]">
+            {(translateMutation.error as Error).message}
+          </p>
+        </div>
+      )}
+
+      {translations && translations.length > 0 && (
+        <section className="mb-10">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-xl font-extrabold text-[var(--lofi-blue-deep)]">
+                <Languages size={20} /> Conditions in Plain English
+              </h2>
+              <p className="text-xs text-[var(--lofi-muted)]">
+                {translations.length} condition{translations.length === 1 ? "" : "s"} translated · click any card to ask the assistant
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setTranslations(null);
+                setTranslatedFrom("");
+                translateMutation.reset();
+                setActiveCard(null);
+              }}
+              className="rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-3.5 py-1.5 text-xs font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+            >
+              Clear translations
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-6">
+            {translations.map((c, i) => (
+              <ConditionCard
+                key={i}
+                index={i}
+                condition={c}
+                onOpenChat={openCardChat}
+                activeId={activeCard?.id ?? null}
+              />
+            ))}
+          </div>
+          {activeCard && isTranslationCard && (
+            <CardChatPopover
+              active={activeCard}
+              context={reportContext}
+              history={chatHistories[activeCard.id] ?? []}
+              insight={chatInsights[activeCard.id] ?? null}
+              onHistoryChange={(id, next) =>
+                setChatHistories((prev) => ({ ...prev, [id]: next }))
+              }
+              onInsight={(id, text) =>
+                setChatInsights((prev) => ({ ...prev, [id]: text }))
+              }
+              onClose={() => setActiveCard(null)}
+            />
+          )}
+        </section>
       )}
 
       {current ? (
@@ -1170,6 +1280,57 @@ function AlternativesCard({
           })}
         </div>
       )}
+    </article>
+  );
+}
+
+function ConditionCard({
+  index,
+  condition,
+  onOpenChat,
+  activeId,
+}: {
+  index: number;
+  condition: TranslatedCondition;
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
+}) {
+  const id = `condition-${index}`;
+  const value = `Condition: ${condition.title}\n\nOriginal:\n${condition.original}\n\nPlain English:\n${condition.plainEnglish}\n\nWhat to do:\n${condition.whatToDo}`;
+  return (
+    <article
+      {...cardClickProps({ id, label: condition.title, value }, onOpenChat)}
+      className={`flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
+    >
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          style={{ backgroundColor: "var(--lofi-blue)" }}
+        >
+          <Languages size={14} /> {condition.title}
+        </span>
+      </div>
+
+      <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-muted)]">
+        Original condition
+      </p>
+      <p className="mb-4 whitespace-pre-line text-sm italic leading-relaxed text-[var(--lofi-muted)]">
+        {condition.original}
+      </p>
+
+      <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+        In plain English
+      </p>
+      <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+        {condition.plainEnglish}
+      </p>
+
+      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+        <ListChecks size={13} /> What to do
+      </p>
+      <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+        {condition.whatToDo}
+      </p>
     </article>
   );
 }
