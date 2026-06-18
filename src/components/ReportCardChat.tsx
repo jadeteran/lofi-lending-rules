@@ -221,9 +221,13 @@ export function CardChatPopover({
             report: context.report,
             mode: "chat",
             messages: nextHistory.slice(-12),
+            captureResponsibility,
           },
         });
         onHistoryChange(active.id, [...nextHistory, { role: "assistant", content: res.text }]);
+        if (res.learnedResponsibility && onResponsibilityLearned) {
+          onResponsibilityLearned(active.label, res.learnedResponsibility);
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong.");
         onHistoryChange(active.id, nextHistory);
@@ -231,7 +235,7 @@ export function CardChatPopover({
         setBusy(false);
       }
     },
-    [active, busy, context, history, ask, onHistoryChange],
+    [active, busy, context, history, ask, onHistoryChange, captureResponsibility, onResponsibilityLearned],
   );
 
   if (!pos) return null;
