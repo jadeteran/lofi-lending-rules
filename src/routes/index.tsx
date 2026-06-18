@@ -572,7 +572,71 @@ function StudyCorner() {
         </div>
       )}
 
-      {current ? (
+      {translateMutation.isError && (
+        <div className="mb-6 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-6 text-center shadow-[var(--lofi-shadow)]">
+          <p className="flex items-center justify-center gap-2 text-lg font-bold text-[var(--lofi-blue-deep)]">
+            Couldn't translate that <Headphones size={18} />
+          </p>
+          <p className="mt-2 text-sm text-[var(--lofi-muted)]">
+            {(translateMutation.error as Error).message}
+          </p>
+        </div>
+      )}
+
+      {translations && translations.length > 0 && (
+        <section className="mb-10">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-xl font-extrabold text-[var(--lofi-blue-deep)]">
+                <Languages size={20} /> Conditions in Plain English
+              </h2>
+              <p className="text-xs text-[var(--lofi-muted)]">
+                {translations.length} condition{translations.length === 1 ? "" : "s"} translated · click any card to ask the assistant
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setTranslations(null);
+                setTranslatedFrom("");
+                translateMutation.reset();
+                setActiveCard(null);
+              }}
+              className="rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-3.5 py-1.5 text-xs font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+            >
+              Clear translations
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-6">
+            {translations.map((c, i) => (
+              <ConditionCard
+                key={i}
+                index={i}
+                condition={c}
+                onOpenChat={openCardChat}
+                activeId={activeCard?.id ?? null}
+              />
+            ))}
+          </div>
+          {activeCard && isTranslationCard && (
+            <CardChatPopover
+              active={activeCard}
+              context={reportContext}
+              history={chatHistories[activeCard.id] ?? []}
+              insight={chatInsights[activeCard.id] ?? null}
+              onHistoryChange={(id, next) =>
+                setChatHistories((prev) => ({ ...prev, [id]: next }))
+              }
+              onInsight={(id, text) =>
+                setChatInsights((prev) => ({ ...prev, [id]: text }))
+              }
+              onClose={() => setActiveCard(null)}
+            />
+          )}
+        </section>
+      )}
+
+
         <div className="flex flex-col gap-6 lg:flex-row">
           <section className="min-w-0 flex-1">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
