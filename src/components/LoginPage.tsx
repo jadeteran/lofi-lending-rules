@@ -62,7 +62,7 @@ export function LoginPage() {
               Welcome back
             </h1>
             <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-[var(--lofi-muted)]">
-              Sign in to queue the beats and drop a scenario to analyze.
+              Sign in, Have Big Thoughts, Ask Big Questions
             </p>
           </div>
 
