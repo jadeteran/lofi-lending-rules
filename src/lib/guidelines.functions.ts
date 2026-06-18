@@ -465,6 +465,9 @@ const TranslateInputSchema = z
     message: "Paste the conditions or attach a screenshot to translate.",
   });
 
+export const RESPONSIBILITIES = ["LO", "Processor", "Borrower", "Title", "Closing", "Other"] as const;
+export type Responsibility = (typeof RESPONSIBILITIES)[number];
+
 export type TranslatedCondition = {
   title: string;
   original: string;
@@ -472,6 +475,7 @@ export type TranslatedCondition = {
   reason: string;
   docsToProvide: string;
   keyDetails: string;
+  responsibility: Responsibility;
 };
 
 const TranslatedConditionSchema = z.object({
@@ -481,6 +485,7 @@ const TranslatedConditionSchema = z.object({
   reason: z.string().default(""),
   docsToProvide: z.string().default(""),
   keyDetails: z.string().default(""),
+  responsibility: z.string().default(""),
 });
 
 export const translateConditions = createServerFn({ method: "POST" })
