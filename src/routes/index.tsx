@@ -665,7 +665,7 @@ function StudyCorner() {
               className="mx-auto h-[138px] w-[138px] object-contain drop-shadow-[0_10px_24px_oklch(0.4_0.08_56_/_0.3)]"
             />
             <p className="mt-3 text-lg font-bold text-[var(--lofi-blue-deep)]">
-              Queue the beats and drop a scenario to analyze…
+              &nbsp;Drop a scenario to analyze…
             </p>
           </div>
         )
