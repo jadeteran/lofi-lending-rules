@@ -636,7 +636,7 @@ function StudyCorner() {
         </section>
       )}
 
-
+      {current ? (
         <div className="flex flex-col gap-6 lg:flex-row">
           <section className="min-w-0 flex-1">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
