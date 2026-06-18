@@ -6,10 +6,10 @@ import {
   Clock, Settings, LogOut, Paperclip, Sparkles, Check, X, ArrowRight,
   FileText, Diamond, ClipboardList, Construction, BarChart3, BookOpen,
   Compass, Shuffle, FolderOpen, Briefcase, Hand, Handshake, Headphones,
-  CheckCircle2, Circle, AlertTriangle, Ban, type LucideIcon,
+  CheckCircle2, Circle, AlertTriangle, Ban, Languages, ListChecks, type LucideIcon,
 } from "lucide-react";
 
-import { analyzeScenario, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage } from "@/lib/guidelines.functions";
+import { analyzeScenario, translateConditions, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage, type TranslatedCondition } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
 import { CardChatPopover, type ActiveCard, type ReportContext } from "@/components/ReportCardChat";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
