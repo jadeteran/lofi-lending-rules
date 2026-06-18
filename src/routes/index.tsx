@@ -625,16 +625,39 @@ function StudyCorner() {
               Clear translations
             </button>
           </div>
-          <div className="grid grid-cols-1 gap-6">
-            {translations.map((c, i) => (
-              <ConditionCard
-                key={i}
-                index={i}
-                condition={c}
-                onOpenChat={openCardChat}
-                activeId={activeCard?.id ?? null}
-              />
-            ))}
+          <div className="flex flex-col gap-8">
+            {RESPONSIBILITIES.map((resp) => {
+              const items = translations
+                .map((c, i) => ({ c, i }))
+                .filter((x) => x.c.responsibility === resp);
+              if (items.length === 0) return null;
+              return (
+                <div key={resp}>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-cream)]"
+                      style={{ backgroundColor: "var(--lofi-blue-deep)" }}
+                    >
+                      {DEPT_LABELS[resp]}
+                    </span>
+                    <span className="text-xs text-[var(--lofi-muted)]">
+                      {items.length} condition{items.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-6">
+                    {items.map(({ c, i }) => (
+                      <ConditionCard
+                        key={i}
+                        index={i}
+                        condition={c}
+                        onOpenChat={openCardChat}
+                        activeId={activeCard?.id ?? null}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
           {activeCard && isTranslationCard && (
             <CardChatPopover
