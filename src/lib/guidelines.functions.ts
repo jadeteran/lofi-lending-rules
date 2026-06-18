@@ -496,7 +496,17 @@ export const translateConditions = createServerFn({ method: "POST" })
 
     const gateway = createLovableAiGatewayProvider(key);
 
-    const system = `You are a mortgage underwriting translator. A loan officer or borrower provides raw underwriting/lender CONDITIONS — either pasted as text or as a SCREENSHOT/IMAGE/PDF — often dense jargon, abbreviations, and boilerplate they do NOT understand — and you explain each one in clear plain English, tell them exactly which documents to provide, and surface the important specifics.
+    // Load learned responsibility overrides so re-categorizations the user made
+    // via chat carry forward to future translations.
+    const { readDeptRules } = await import("@/lib/dept-rules.server");
+    const learnedRules = await readDeptRules();
+    const learnedBlock = learnedRules.length
+      ? learnedRules
+          .map((r) => `- A condition like "${r.title}"${r.keywords ? ` (keywords: ${r.keywords})` : ""} → ${r.responsibility}`)
+          .join("\n")
+      : "(none yet)";
+
+    const system = `You are a mortgage underwriting translator. A loan officer or borrower provides raw underwriting/lender CONDITIONS — either pasted as text or as a SCREENSHOT/IMAGE/PDF — often dense jargon, abbreviations, and boilerplate they do NOT understand — and you explain each one in clear plain English, tell them exactly which documents to provide, surface the important specifics, and assign which department is responsible for satisfying it.
 
 If the conditions are supplied as an image or file, first read/OCR all the condition text from it, then translate every condition you find.
 
@@ -507,6 +517,10 @@ Respond with raw JSON only (no markdown fences). The JSON must be an object with
 - "reason": 1-2 sentences explaining the GENERAL reason the underwriter asks for this document/condition (e.g. "Lenders verify recent income to confirm you can afford the payment", "Bank statements confirm the down-payment funds are yours and properly sourced"). Keep it educational and easy to understand.
 - "docsToProvide": "- " bullet lines listing exactly which document(s) the borrower/LO must provide to satisfy this condition.
 - "keyDetails": "- " bullet lines calling out the IMPORTANT specifics and requirements for those documents — e.g. exact date ranges or recency ("most recent 30 consecutive days", "last 2 months, all pages"), property addresses, creditor names, lender/mortgagee names, account or loan numbers, dollar amounts, signatures required, and any deadlines. Pull these specifics from the source whenever present. If a needed specific is not in the source, state what the borrower should confirm (e.g. "- Confirm the exact creditor and inquiry date for the required letter of explanation"). Set to "- No special requirements noted." only if there genuinely are none.
+- "responsibility": which party is responsible for clearing this condition. Use EXACTLY one of: "LO" (Loan Officer originator tasks), "Processor" (processor/internal file-build tasks), "Borrower" (items only the borrower can produce/sign), "Title" (title/escrow company items), "Closing" (closer/funder/settlement items). Use "Other" only if none fit.
+
+LEARNED RESPONSIBILITY OVERRIDES (the user previously corrected these — they are AUTHORITATIVE; if a condition matches one of these by meaning, you MUST assign that responsibility):
+${learnedBlock}
 
 ${data.loanType ? `The loan program is "${data.loanType}" — keep explanations relevant to it.` : "No loan program was selected; give general, program-agnostic guidance."}
 Only state details present in the source; never invent figures, names, or dates. Output nothing outside the JSON object.`;
