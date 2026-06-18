@@ -381,20 +381,18 @@ function StudyCorner() {
       </header>
 
       <form onSubmit={handleSubmit} className="mb-10 flex flex-col gap-4">
-        <select
-          value={loanType}
-          onChange={(e) => setLoanType(e.target.value)}
-          className="rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]"
-        >
-          <option value="" disabled>
-            Select an option…
-          </option>
-          {LOAN_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+        <Select value={loanType || undefined} onValueChange={setLoanType}>
+          <SelectTrigger className="h-auto rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]">
+            <SelectValue placeholder="Select an option…" />
+          </SelectTrigger>
+          <SelectContent>
+            {LOAN_TYPES.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <textarea
           value={scenario}
