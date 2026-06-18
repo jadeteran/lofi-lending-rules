@@ -379,13 +379,16 @@ const AskInputSchema = z.object({
   report: z.record(z.string(), z.unknown()).default({}),
   mode: z.enum(["insight", "chat"]).default("chat"),
   messages: z.array(ChatMessageSchema).max(12).default([]),
+  // When true (condition cards), the assistant also watches for the user
+  // re-assigning the responsible department and persists that for the future.
+  captureResponsibility: z.boolean().default(false),
 });
 
 export type ReportChatMessage = z.infer<typeof ChatMessageSchema>;
 
 export const askReportQuestion = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => AskInputSchema.parse(data))
-  .handler(async ({ data }): Promise<{ text: string }> => {
+  .handler(async ({ data }): Promise<{ text: string; learnedResponsibility?: string }> => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("AI is not configured. Missing LOVABLE_API_KEY.");
 
