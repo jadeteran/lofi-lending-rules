@@ -101,6 +101,8 @@ export function CardChatPopover({
   context,
   history,
   insight,
+  captureResponsibility = false,
+  onResponsibilityLearned,
   onHistoryChange,
   onInsight,
   onClose,
@@ -109,6 +111,8 @@ export function CardChatPopover({
   context: ReportContext;
   history: ReportChatMessage[];
   insight: string | null;
+  captureResponsibility?: boolean;
+  onResponsibilityLearned?: (title: string, responsibility: string) => void;
   onHistoryChange: (id: string, next: ReportChatMessage[]) => void;
   onInsight: (id: string, text: string) => void;
   onClose: () => void;
