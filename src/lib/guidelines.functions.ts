@@ -418,7 +418,11 @@ ${data.cardValue || "(no rendered value)"}
 
 FULL REPORT JSON:
 ${reportJson}
-=== END CONTEXT ===`;
+=== END CONTEXT ===${
+      data.captureResponsibility
+        ? `\n\nDEPARTMENT RE-ASSIGNMENT: This is a loan condition. If the user states or implies that this condition is a DIFFERENT department's responsibility (LO, Processor, Borrower, Title, or Closing), confirm it briefly in your reply, then on the VERY LAST line output a tag exactly like [[RESPONSIBILITY: <one of LO|Processor|Borrower|Title|Closing>]]. Only emit the tag when the user is clearly re-assigning responsibility; never emit it otherwise.`
+        : ""
+    }`;
 
     const messages =
       data.mode === "insight"
