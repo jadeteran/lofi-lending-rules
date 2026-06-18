@@ -331,12 +331,20 @@ function StudyCorner() {
     setActiveCard(null);
   }, [selected]);
 
-  const reportContext: ReportContext = {
-    loanType,
-    scenario,
-    versionLabel: current ? (current.isBase ? "Base analysis" : current.label) : "",
-    report: (current?.report ?? {}) as unknown as Record<string, unknown>,
-  };
+  const isTranslationCard = activeCard?.id?.startsWith("condition-") ?? false;
+  const reportContext: ReportContext = isTranslationCard
+    ? {
+        loanType,
+        scenario: translatedFrom,
+        versionLabel: "Plain-English Conditions",
+        report: { conditions: translations ?? [] } as unknown as Record<string, unknown>,
+      }
+    : {
+        loanType,
+        scenario,
+        versionLabel: current ? (current.isBase ? "Base analysis" : current.label) : "",
+        report: (current?.report ?? {}) as unknown as Record<string, unknown>,
+      };
 
 
 
