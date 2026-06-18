@@ -444,7 +444,31 @@ ${reportJson}
         system,
         messages,
       });
-      return { text: text.trim() || "I couldn't generate a response — try rephrasing." };
+
+      let reply = text.trim() || "I couldn't generate a response — try rephrasing.";
+      let learnedResponsibility: string | undefined;
+
+      if (data.captureResponsibility) {
+        const m = reply.match(/\[\[\s*RESPONSIBILITY:\s*([^\]]+?)\s*\]\]/i);
+        if (m) {
+          reply = reply.replace(m[0], "").trim();
+          const { normalizeResponsibility, writeDeptRule } = await import("@/lib/dept-rules.server");
+          const resp = normalizeResponsibility(m[1]);
+          learnedResponsibility = resp;
+          try {
+            await writeDeptRule({
+              title: data.cardLabel,
+              keywords: "",
+              responsibility: resp,
+              updatedAt: new Date().toISOString(),
+            });
+          } catch {
+            // best-effort; never break the chat reply
+          }
+        }
+      }
+
+      return { text: reply, learnedResponsibility };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (msg.includes("429")) {
