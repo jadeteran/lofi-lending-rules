@@ -82,6 +82,7 @@ export async function listScenarioRows(limit = 30): Promise<SavedScenarioRow[]> 
     .select(
       "id, raw_scenario, selected_program, analysis_output, updated_at, summary_title, credit_score, dti, ltv, property_state, profile_group",
     )
+    .neq("selected_program", "__dept_rules__")
     .order("updated_at", { ascending: false })
     .limit(limit);
 

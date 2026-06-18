@@ -379,13 +379,16 @@ const AskInputSchema = z.object({
   report: z.record(z.string(), z.unknown()).default({}),
   mode: z.enum(["insight", "chat"]).default("chat"),
   messages: z.array(ChatMessageSchema).max(12).default([]),
+  // When true (condition cards), the assistant also watches for the user
+  // re-assigning the responsible department and persists that for the future.
+  captureResponsibility: z.boolean().default(false),
 });
 
 export type ReportChatMessage = z.infer<typeof ChatMessageSchema>;
 
 export const askReportQuestion = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => AskInputSchema.parse(data))
-  .handler(async ({ data }): Promise<{ text: string }> => {
+  .handler(async ({ data }): Promise<{ text: string; learnedResponsibility?: string }> => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("AI is not configured. Missing LOVABLE_API_KEY.");
 
@@ -415,7 +418,11 @@ ${data.cardValue || "(no rendered value)"}
 
 FULL REPORT JSON:
 ${reportJson}
-=== END CONTEXT ===`;
+=== END CONTEXT ===${
+      data.captureResponsibility
+        ? `\n\nDEPARTMENT RE-ASSIGNMENT: This is a loan condition. If the user states or implies that this condition is a DIFFERENT department's responsibility (LO, Processor, Borrower, Title, or Closing), confirm it briefly in your reply, then on the VERY LAST line output a tag exactly like [[RESPONSIBILITY: <one of LO|Processor|Borrower|Title|Closing>]]. Only emit the tag when the user is clearly re-assigning responsibility; never emit it otherwise.`
+        : ""
+    }`;
 
     const messages =
       data.mode === "insight"
@@ -437,7 +444,31 @@ ${reportJson}
         system,
         messages,
       });
-      return { text: text.trim() || "I couldn't generate a response — try rephrasing." };
+
+      let reply = text.trim() || "I couldn't generate a response — try rephrasing.";
+      let learnedResponsibility: string | undefined;
+
+      if (data.captureResponsibility) {
+        const m = reply.match(/\[\[\s*RESPONSIBILITY:\s*([^\]]+?)\s*\]\]/i);
+        if (m) {
+          reply = reply.replace(m[0], "").trim();
+          const { normalizeResponsibility, writeDeptRule } = await import("@/lib/dept-rules.server");
+          const resp = normalizeResponsibility(m[1]);
+          learnedResponsibility = resp;
+          try {
+            await writeDeptRule({
+              title: data.cardLabel,
+              keywords: "",
+              responsibility: resp,
+              updatedAt: new Date().toISOString(),
+            });
+          } catch {
+            // best-effort; never break the chat reply
+          }
+        }
+      }
+
+      return { text: reply, learnedResponsibility };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (msg.includes("429")) {
@@ -465,6 +496,9 @@ const TranslateInputSchema = z
     message: "Paste the conditions or attach a screenshot to translate.",
   });
 
+export const RESPONSIBILITIES = ["LO", "Processor", "Borrower", "Title", "Closing", "Other"] as const;
+export type Responsibility = (typeof RESPONSIBILITIES)[number];
+
 export type TranslatedCondition = {
   title: string;
   original: string;
@@ -472,6 +506,7 @@ export type TranslatedCondition = {
   reason: string;
   docsToProvide: string;
   keyDetails: string;
+  responsibility: Responsibility;
 };
 
 const TranslatedConditionSchema = z.object({
@@ -481,6 +516,7 @@ const TranslatedConditionSchema = z.object({
   reason: z.string().default(""),
   docsToProvide: z.string().default(""),
   keyDetails: z.string().default(""),
+  responsibility: z.string().default(""),
 });
 
 export const translateConditions = createServerFn({ method: "POST" })
@@ -491,7 +527,17 @@ export const translateConditions = createServerFn({ method: "POST" })
 
     const gateway = createLovableAiGatewayProvider(key);
 
-    const system = `You are a mortgage underwriting translator. A loan officer or borrower provides raw underwriting/lender CONDITIONS — either pasted as text or as a SCREENSHOT/IMAGE/PDF — often dense jargon, abbreviations, and boilerplate they do NOT understand — and you explain each one in clear plain English, tell them exactly which documents to provide, and surface the important specifics.
+    // Load learned responsibility overrides so re-categorizations the user made
+    // via chat carry forward to future translations.
+    const { readDeptRules } = await import("@/lib/dept-rules.server");
+    const learnedRules = await readDeptRules();
+    const learnedBlock = learnedRules.length
+      ? learnedRules
+          .map((r) => `- A condition like "${r.title}"${r.keywords ? ` (keywords: ${r.keywords})` : ""} → ${r.responsibility}`)
+          .join("\n")
+      : "(none yet)";
+
+    const system = `You are a mortgage underwriting translator. A loan officer or borrower provides raw underwriting/lender CONDITIONS — either pasted as text or as a SCREENSHOT/IMAGE/PDF — often dense jargon, abbreviations, and boilerplate they do NOT understand — and you explain each one in clear plain English, tell them exactly which documents to provide, surface the important specifics, and assign which department is responsible for satisfying it.
 
 If the conditions are supplied as an image or file, first read/OCR all the condition text from it, then translate every condition you find.
 
@@ -502,6 +548,10 @@ Respond with raw JSON only (no markdown fences). The JSON must be an object with
 - "reason": 1-2 sentences explaining the GENERAL reason the underwriter asks for this document/condition (e.g. "Lenders verify recent income to confirm you can afford the payment", "Bank statements confirm the down-payment funds are yours and properly sourced"). Keep it educational and easy to understand.
 - "docsToProvide": "- " bullet lines listing exactly which document(s) the borrower/LO must provide to satisfy this condition.
 - "keyDetails": "- " bullet lines calling out the IMPORTANT specifics and requirements for those documents — e.g. exact date ranges or recency ("most recent 30 consecutive days", "last 2 months, all pages"), property addresses, creditor names, lender/mortgagee names, account or loan numbers, dollar amounts, signatures required, and any deadlines. Pull these specifics from the source whenever present. If a needed specific is not in the source, state what the borrower should confirm (e.g. "- Confirm the exact creditor and inquiry date for the required letter of explanation"). Set to "- No special requirements noted." only if there genuinely are none.
+- "responsibility": which party is responsible for clearing this condition. Use EXACTLY one of: "LO" (Loan Officer originator tasks), "Processor" (processor/internal file-build tasks), "Borrower" (items only the borrower can produce/sign), "Title" (title/escrow company items), "Closing" (closer/funder/settlement items). Use "Other" only if none fit.
+
+LEARNED RESPONSIBILITY OVERRIDES (the user previously corrected these — they are AUTHORITATIVE; if a condition matches one of these by meaning, you MUST assign that responsibility):
+${learnedBlock}
 
 ${data.loanType ? `The loan program is "${data.loanType}" — keep explanations relevant to it.` : "No loan program was selected; give general, program-agnostic guidance."}
 Only state details present in the source; never invent figures, names, or dates. Output nothing outside the JSON object.`;
@@ -536,7 +586,8 @@ Only state details present in the source; never invent figures, names, or dates.
       const jsonStr = start !== -1 && end !== -1 ? cleaned.slice(start, end + 1) : cleaned;
 
       const parsed = JSON.parse(jsonStr) as { conditions?: unknown[] };
-      const conditions = Array.isArray(parsed.conditions)
+      const { normalizeResponsibility } = await import("@/lib/dept-rules.server");
+      const conditions: TranslatedCondition[] = Array.isArray(parsed.conditions)
         ? parsed.conditions.map((c) => {
             const v = TranslatedConditionSchema.parse(c ?? {});
             return {
@@ -546,6 +597,7 @@ Only state details present in the source; never invent figures, names, or dates.
               reason: v.reason.trim() || "The underwriter needs this to verify the loan file.",
               docsToProvide: v.docsToProvide.trim() || "- Confirm the required document with your underwriter.",
               keyDetails: v.keyDetails.trim() || "- No special requirements noted.",
+              responsibility: normalizeResponsibility(v.responsibility),
             };
           })
         : [];

@@ -9,7 +9,7 @@ import {
   CheckCircle2, Circle, AlertTriangle, Ban, Languages, ListChecks, type LucideIcon,
 } from "lucide-react";
 
-import { analyzeScenario, translateConditions, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage, type TranslatedCondition } from "@/lib/guidelines.functions";
+import { analyzeScenario, translateConditions, LOAN_TYPES, RESPONSIBILITIES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage, type TranslatedCondition, type Responsibility } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
 import { CardChatPopover, type ActiveCard, type ReportContext } from "@/components/ReportCardChat";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
@@ -110,6 +110,18 @@ type Version = {
 
 const ACCEPTED = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
 
+// Human-friendly labels for each responsible department / party.
+const DEPT_LABELS: Record<Responsibility, string> = {
+  LO: "Loan Officer (LO)",
+  Processor: "Processor",
+  Borrower: "Borrower",
+  Title: "Title / Escrow",
+  Closing: "Closing / Funding",
+  Other: "Other / Unassigned",
+};
+
+
+
 function shortLabel(text: string) {
   const clean = text.trim().replace(/\s+/g, " ");
   if (!clean) return "Context update";
@@ -167,6 +179,20 @@ function StudyCorner() {
   function handleTranslate() {
     if (!canTranslate) return;
     translateMutation.mutate({ conditions: scenario.trim(), loanType, attachments });
+  }
+
+  // When the user reassigns a condition's department via chat, recategorize the
+  // visible card immediately (the rule is persisted server-side for the future).
+  function applyLearnedResponsibility(title: string, responsibility: string) {
+    setTranslations((prev) =>
+      prev
+        ? prev.map((c) =>
+            c.title.toLowerCase().trim() === title.toLowerCase().trim()
+              ? { ...c, responsibility: responsibility as Responsibility }
+              : c,
+          )
+        : prev,
+    );
   }
 
   function openCardChat(payload: ActiveCard) {
@@ -611,16 +637,39 @@ function StudyCorner() {
               Clear translations
             </button>
           </div>
-          <div className="grid grid-cols-1 gap-6">
-            {translations.map((c, i) => (
-              <ConditionCard
-                key={i}
-                index={i}
-                condition={c}
-                onOpenChat={openCardChat}
-                activeId={activeCard?.id ?? null}
-              />
-            ))}
+          <div className="flex flex-col gap-8">
+            {RESPONSIBILITIES.map((resp) => {
+              const items = translations
+                .map((c, i) => ({ c, i }))
+                .filter((x) => x.c.responsibility === resp);
+              if (items.length === 0) return null;
+              return (
+                <div key={resp}>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-cream)]"
+                      style={{ backgroundColor: "var(--lofi-blue-deep)" }}
+                    >
+                      {DEPT_LABELS[resp]}
+                    </span>
+                    <span className="text-xs text-[var(--lofi-muted)]">
+                      {items.length} condition{items.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-6">
+                    {items.map(({ c, i }) => (
+                      <ConditionCard
+                        key={i}
+                        index={i}
+                        condition={c}
+                        onOpenChat={openCardChat}
+                        activeId={activeCard?.id ?? null}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
           {activeCard && isTranslationCard && (
             <CardChatPopover
@@ -628,6 +677,8 @@ function StudyCorner() {
               context={reportContext}
               history={chatHistories[activeCard.id] ?? []}
               insight={chatInsights[activeCard.id] ?? null}
+              captureResponsibility
+              onResponsibilityLearned={applyLearnedResponsibility}
               onHistoryChange={(id, next) =>
                 setChatHistories((prev) => ({ ...prev, [id]: next }))
               }
@@ -1300,20 +1351,27 @@ function ConditionCard({
   activeId: string | null;
 }) {
   const id = `condition-${index}`;
-  const value = `Condition: ${condition.title}\n\nOriginal:\n${condition.original}\n\nPlain English:\n${condition.plainEnglish}\n\nWhy they ask:\n${condition.reason}\n\nDocs to provide:\n${condition.docsToProvide}\n\nImportant details:\n${condition.keyDetails}`;
+  const value = `Condition: ${condition.title}\n\nResponsible department: ${DEPT_LABELS[condition.responsibility]}\n\nOriginal:\n${condition.original}\n\nPlain English:\n${condition.plainEnglish}\n\nWhy they ask:\n${condition.reason}\n\nDocs to provide:\n${condition.docsToProvide}\n\nImportant details:\n${condition.keyDetails}`;
   return (
     <article
       {...cardClickProps({ id, label: condition.title, value }, onOpenChat)}
       className={`flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
     >
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
           style={{ backgroundColor: "var(--lofi-blue)" }}
         >
           <Languages size={14} /> {condition.title}
         </span>
+        <span className="inline-flex items-center rounded-full border border-[var(--lofi-blue-deep)]/30 bg-[var(--lofi-bg-1)] px-2.5 py-1 text-[11px] font-bold text-[var(--lofi-blue-deep)]">
+          {DEPT_LABELS[condition.responsibility]}
+        </span>
       </div>
+      <p className="mb-3 text-[11px] text-[var(--lofi-muted)]">
+        Wrong team? Tell the assistant (e.g. “this is Title’s job”) and it’ll remember next time.
+      </p>
+
 
       <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-muted)]">
         Original condition
