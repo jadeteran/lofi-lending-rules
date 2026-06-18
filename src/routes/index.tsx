@@ -9,7 +9,7 @@ import {
   CheckCircle2, Circle, AlertTriangle, Ban, Languages, ListChecks, type LucideIcon,
 } from "lucide-react";
 
-import { analyzeScenario, translateConditions, LOAN_TYPES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage, type TranslatedCondition } from "@/lib/guidelines.functions";
+import { analyzeScenario, translateConditions, LOAN_TYPES, RESPONSIBILITIES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage, type TranslatedCondition, type Responsibility } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
 import { CardChatPopover, type ActiveCard, type ReportContext } from "@/components/ReportCardChat";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
