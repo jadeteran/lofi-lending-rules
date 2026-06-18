@@ -455,10 +455,15 @@ ${reportJson}
 // dense lender/UW jargon) and returns clear, actionable plain-English cards.
 // ---------------------------------------------------------------------------
 
-const TranslateInputSchema = z.object({
-  conditions: z.string().min(1, "Paste the conditions to translate."),
-  loanType: z.string().default(""),
-});
+const TranslateInputSchema = z
+  .object({
+    conditions: z.string().default(""),
+    loanType: z.string().default(""),
+    attachments: z.array(AttachmentSchema).max(6).default([]),
+  })
+  .refine((d) => d.conditions.trim() !== "" || d.attachments.length > 0, {
+    message: "Paste the conditions or attach a screenshot to translate.",
+  });
 
 export type TranslatedCondition = {
   title: string;
@@ -486,29 +491,43 @@ export const translateConditions = createServerFn({ method: "POST" })
 
     const gateway = createLovableAiGatewayProvider(key);
 
-    const system = `You are a mortgage underwriting translator. A loan officer or borrower pastes raw underwriting/lender CONDITIONS — often dense jargon, abbreviations, and boilerplate they do NOT understand — and you explain each one in clear plain English, tell them exactly which documents to provide, and surface the important specifics.
+    const system = `You are a mortgage underwriting translator. A loan officer or borrower provides raw underwriting/lender CONDITIONS — either pasted as text or as a SCREENSHOT/IMAGE/PDF — often dense jargon, abbreviations, and boilerplate they do NOT understand — and you explain each one in clear plain English, tell them exactly which documents to provide, and surface the important specifics.
 
-Respond with raw JSON only (no markdown fences). The JSON must be an object with a single key "conditions" whose value is an array. Split the pasted text into individual conditions (one object per distinct condition/stipulation). Each array item is an object with exactly these string keys:
+If the conditions are supplied as an image or file, first read/OCR all the condition text from it, then translate every condition you find.
+
+Respond with raw JSON only (no markdown fences). The JSON must be an object with a single key "conditions" whose value is an array. Split the source into individual conditions (one object per distinct condition/stipulation). Each array item is an object with exactly these string keys:
 - "title": a short 3-7 word label naming the condition (e.g. "Most Recent Pay Stubs").
 - "original": the original condition text, lightly cleaned up but faithful to the source wording.
 - "plainEnglish": a clear 1-3 sentence plain-English explanation of what the underwriter is actually asking for. No jargon.
 - "reason": 1-2 sentences explaining the GENERAL reason the underwriter asks for this document/condition (e.g. "Lenders verify recent income to confirm you can afford the payment", "Bank statements confirm the down-payment funds are yours and properly sourced"). Keep it educational and easy to understand.
 - "docsToProvide": "- " bullet lines listing exactly which document(s) the borrower/LO must provide to satisfy this condition.
-- "keyDetails": "- " bullet lines calling out the IMPORTANT specifics and requirements for those documents — e.g. exact date ranges or recency ("most recent 30 consecutive days", "last 2 months, all pages"), property addresses, creditor names, lender/mortgagee names, account or loan numbers, dollar amounts, signatures required, and any deadlines. Pull these specifics from the source text whenever present. If a needed specific is not in the source, state what the borrower should confirm (e.g. "- Confirm the exact creditor and inquiry date for the required letter of explanation"). Set to "- No special requirements noted." only if there genuinely are none.
+- "keyDetails": "- " bullet lines calling out the IMPORTANT specifics and requirements for those documents — e.g. exact date ranges or recency ("most recent 30 consecutive days", "last 2 months, all pages"), property addresses, creditor names, lender/mortgagee names, account or loan numbers, dollar amounts, signatures required, and any deadlines. Pull these specifics from the source whenever present. If a needed specific is not in the source, state what the borrower should confirm (e.g. "- Confirm the exact creditor and inquiry date for the required letter of explanation"). Set to "- No special requirements noted." only if there genuinely are none.
 
 ${data.loanType ? `The loan program is "${data.loanType}" — keep explanations relevant to it.` : "No loan program was selected; give general, program-agnostic guidance."}
-Only state details present in the pasted text; never invent figures, names, or dates. Output nothing outside the JSON object.`;
+Only state details present in the source; never invent figures, names, or dates. Output nothing outside the JSON object.`;
 
     try {
+      const textPart = data.conditions.trim()
+        ? `Conditions to translate:\n\n${data.conditions.trim()}`
+        : "The conditions are in the attached screenshot/file(s). Read all the condition text from them and translate every condition you find.";
+
+      const content: Array<
+        | { type: "text"; text: string }
+        | { type: "image"; image: string }
+        | { type: "file"; data: string; mediaType: string }
+      > = [{ type: "text", text: textPart }];
+      for (const att of data.attachments) {
+        if (att.mediaType.startsWith("image/")) {
+          content.push({ type: "image", image: att.dataUrl });
+        } else {
+          content.push({ type: "file", data: att.dataUrl, mediaType: att.mediaType });
+        }
+      }
+
       const { text } = await generateText({
         model: gateway("google/gemini-3-flash-preview"),
         system,
-        messages: [
-          {
-            role: "user",
-            content: `Conditions to translate:\n\n${data.conditions.trim()}`,
-          },
-        ],
+        messages: [{ role: "user", content }],
       });
 
       const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
