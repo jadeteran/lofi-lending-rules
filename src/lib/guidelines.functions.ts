@@ -455,10 +455,15 @@ ${reportJson}
 // dense lender/UW jargon) and returns clear, actionable plain-English cards.
 // ---------------------------------------------------------------------------
 
-const TranslateInputSchema = z.object({
-  conditions: z.string().min(1, "Paste the conditions to translate."),
-  loanType: z.string().default(""),
-});
+const TranslateInputSchema = z
+  .object({
+    conditions: z.string().default(""),
+    loanType: z.string().default(""),
+    attachments: z.array(AttachmentSchema).max(6).default([]),
+  })
+  .refine((d) => d.conditions.trim() !== "" || d.attachments.length > 0, {
+    message: "Paste the conditions or attach a screenshot to translate.",
+  });
 
 export type TranslatedCondition = {
   title: string;
