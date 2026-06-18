@@ -169,6 +169,20 @@ function StudyCorner() {
     translateMutation.mutate({ conditions: scenario.trim(), loanType, attachments });
   }
 
+  // When the user reassigns a condition's department via chat, recategorize the
+  // visible card immediately (the rule is persisted server-side for the future).
+  function applyLearnedResponsibility(title: string, responsibility: string) {
+    setTranslations((prev) =>
+      prev
+        ? prev.map((c) =>
+            c.title.toLowerCase().trim() === title.toLowerCase().trim()
+              ? { ...c, responsibility: responsibility as Responsibility }
+              : c,
+          )
+        : prev,
+    );
+  }
+
   function openCardChat(payload: ActiveCard) {
     setActiveCard((prev) => (prev?.id === payload.id ? null : payload));
   }
