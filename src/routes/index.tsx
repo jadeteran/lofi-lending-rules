@@ -293,6 +293,9 @@ function StudyCorner() {
     setLastProgram(null);
     setTranslations(null);
     setTranslatedFrom("");
+    setActiveCard(null);
+    setChatHistories({});
+    setChatInsights({});
     translateMutation.reset();
     mutation.reset();
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -631,6 +634,8 @@ function StudyCorner() {
                 setTranslatedFrom("");
                 translateMutation.reset();
                 setActiveCard(null);
+                setChatHistories({});
+                setChatInsights({});
               }}
               className="rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-3.5 py-1.5 text-xs font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
             >
