@@ -15,6 +15,7 @@ import { CardChatPopover, type ActiveCard, type ReportContext } from "@/componen
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import heroHeadphones from "@/assets/anime-headphones-hero.jpg.asset.json";
 import headphoneBadge from "@/assets/anime-headphone-badge.png.asset.json";
 import coffeeAccent from "@/assets/anime-coffee-accent.png.asset.json";
