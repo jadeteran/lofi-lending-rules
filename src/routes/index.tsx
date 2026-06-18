@@ -110,6 +110,18 @@ type Version = {
 
 const ACCEPTED = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
 
+// Human-friendly labels for each responsible department / party.
+const DEPT_LABELS: Record<Responsibility, string> = {
+  LO: "Loan Officer (LO)",
+  Processor: "Processor",
+  Borrower: "Borrower",
+  Title: "Title / Escrow",
+  Closing: "Closing / Funding",
+  Other: "Other / Unassigned",
+};
+
+
+
 function shortLabel(text: string) {
   const clean = text.trim().replace(/\s+/g, " ");
   if (!clean) return "Context update";
