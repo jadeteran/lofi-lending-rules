@@ -1283,3 +1283,54 @@ function AlternativesCard({
     </article>
   );
 }
+
+function ConditionCard({
+  index,
+  condition,
+  onOpenChat,
+  activeId,
+}: {
+  index: number;
+  condition: TranslatedCondition;
+  onOpenChat: (p: ActiveCard) => void;
+  activeId: string | null;
+}) {
+  const id = `condition-${index}`;
+  const value = `Condition: ${condition.title}\n\nOriginal:\n${condition.original}\n\nPlain English:\n${condition.plainEnglish}\n\nWhat to do:\n${condition.whatToDo}`;
+  return (
+    <article
+      {...cardClickProps({ id, label: condition.title, value }, onOpenChat)}
+      className={`flex flex-col rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] p-7 shadow-[var(--lofi-shadow)] ${CARD_INTERACTIVE} ${activeRing(activeId === id)}`}
+    >
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)]"
+          style={{ backgroundColor: "var(--lofi-blue)" }}
+        >
+          <Languages size={14} /> {condition.title}
+        </span>
+      </div>
+
+      <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-muted)]">
+        Original condition
+      </p>
+      <p className="mb-4 whitespace-pre-line text-sm italic leading-relaxed text-[var(--lofi-muted)]">
+        {condition.original}
+      </p>
+
+      <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+        In plain English
+      </p>
+      <p className="mb-4 whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+        {condition.plainEnglish}
+      </p>
+
+      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-blue-deep)]">
+        <ListChecks size={13} /> What to do
+      </p>
+      <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--lofi-ink)]">
+        {condition.whatToDo}
+      </p>
+    </article>
+  );
+}
