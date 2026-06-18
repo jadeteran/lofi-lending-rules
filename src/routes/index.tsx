@@ -415,18 +415,31 @@ function StudyCorner() {
       </header>
 
       <form onSubmit={handleSubmit} className="mb-10 flex flex-col gap-4">
-        <Select value={loanType || undefined} onValueChange={setLoanType}>
-          <SelectTrigger className="h-auto rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]">
-            <SelectValue placeholder="Select an option…" />
-          </SelectTrigger>
-          <SelectContent>
-            {LOAN_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+          <Select value={loanType || undefined} onValueChange={setLoanType}>
+            <SelectTrigger className="h-auto w-full flex-1 rounded-xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-4 py-3.5 text-sm font-semibold text-[var(--lofi-ink)] shadow-[var(--lofi-shadow)] outline-none transition focus:border-[var(--lofi-blue)]">
+              <SelectValue placeholder="Select an option…" />
+            </SelectTrigger>
+            <SelectContent>
+              {LOAN_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <button
+            type="button"
+            onClick={handleTranslate}
+            disabled={scenario.trim() === "" || translateMutation.isPending}
+            title="Translate the conditions in the box into plain English"
+            className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--lofi-blue-deep)]/30 bg-[var(--lofi-card)] px-5 py-3.5 text-sm font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          >
+            <Languages size={16} />
+            {translateMutation.isPending ? "Translating…" : "Translate Conditions"}
+          </button>
+        </div>
+
 
         <textarea
           value={scenario}
