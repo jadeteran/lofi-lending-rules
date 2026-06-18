@@ -149,10 +149,11 @@ function StudyCorner() {
   const [translatedFrom, setTranslatedFrom] = useState("");
 
   const translateMutation = useMutation({
-    mutationFn: (vars: { conditions: string; loanType: string }) => translate({ data: vars }),
+    mutationFn: (vars: { conditions: string; loanType: string; attachments: Attachment[] }) =>
+      translate({ data: vars }),
     onSuccess: (res, vars) => {
       setTranslations(res.conditions);
-      setTranslatedFrom(vars.conditions);
+      setTranslatedFrom(vars.conditions || "(from attached screenshot/file)");
       setActiveCard(null);
       if (typeof window !== "undefined") {
         setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 60);
@@ -160,9 +161,12 @@ function StudyCorner() {
     },
   });
 
+  const canTranslate =
+    (scenario.trim() !== "" || attachments.length > 0) && !translateMutation.isPending;
+
   function handleTranslate() {
-    if (scenario.trim() === "" || translateMutation.isPending) return;
-    translateMutation.mutate({ conditions: scenario.trim(), loanType });
+    if (!canTranslate) return;
+    translateMutation.mutate({ conditions: scenario.trim(), loanType, attachments });
   }
 
   function openCardChat(payload: ActiveCard) {
