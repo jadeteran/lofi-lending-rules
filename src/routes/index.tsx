@@ -124,6 +124,7 @@ function StudyCorner() {
   const { role, signOut } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
   const analyze = useServerFn(analyzeScenario);
+  const translate = useServerFn(translateConditions);
   const saveFn = useServerFn(saveScenario);
   const listFn = useServerFn(listScenarios);
   const [loanType, setLoanType] = useState<string>("");
