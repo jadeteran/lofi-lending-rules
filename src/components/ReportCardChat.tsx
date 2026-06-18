@@ -82,15 +82,18 @@ function computePos(el: HTMLElement): Pos {
   const r = el.getBoundingClientRect();
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const spaceBelow = vh - r.bottom;
-  const placement: "top" | "bottom" = spaceBelow < 360 && r.top > 360 ? "top" : "bottom";
 
-  let left = r.left;
+  // Dock the chat to the right side of the report boxes.
+  let left = r.right + GAP;
   if (left + PW + MARGIN > vw) left = vw - PW - MARGIN;
   if (left < MARGIN) left = MARGIN;
 
-  const top = placement === "bottom" ? r.bottom + GAP : Math.max(MARGIN, r.top - GAP);
-  return { top, left, placement };
+  // Align the top of the chat with the card, clamped to the viewport.
+  let top = Math.max(MARGIN, r.top);
+  const maxTop = vh - 200 - MARGIN;
+  if (top > maxTop) top = Math.max(MARGIN, maxTop);
+
+  return { top, left, placement: "bottom" };
 }
 
 export function CardChatPopover({
