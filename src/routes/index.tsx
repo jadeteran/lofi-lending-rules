@@ -665,6 +665,8 @@ function StudyCorner() {
               context={reportContext}
               history={chatHistories[activeCard.id] ?? []}
               insight={chatInsights[activeCard.id] ?? null}
+              captureResponsibility
+              onResponsibilityLearned={applyLearnedResponsibility}
               onHistoryChange={(id, next) =>
                 setChatHistories((prev) => ({ ...prev, [id]: next }))
               }
