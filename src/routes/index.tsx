@@ -293,6 +293,9 @@ function StudyCorner() {
     setLastProgram(null);
     setTranslations(null);
     setTranslatedFrom("");
+    setActiveCard(null);
+    setChatHistories({});
+    setChatInsights({});
     translateMutation.reset();
     mutation.reset();
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
