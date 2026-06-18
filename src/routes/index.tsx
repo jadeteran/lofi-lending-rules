@@ -144,6 +144,27 @@ function StudyCorner() {
   const [chatHistories, setChatHistories] = useState<Record<string, ReportChatMessage[]>>({});
   const [chatInsights, setChatInsights] = useState<Record<string, string>>({});
 
+  // Plain-English condition translator.
+  const [translations, setTranslations] = useState<TranslatedCondition[] | null>(null);
+  const [translatedFrom, setTranslatedFrom] = useState("");
+
+  const translateMutation = useMutation({
+    mutationFn: (vars: { conditions: string; loanType: string }) => translate({ data: vars }),
+    onSuccess: (res, vars) => {
+      setTranslations(res.conditions);
+      setTranslatedFrom(vars.conditions);
+      setActiveCard(null);
+      if (typeof window !== "undefined") {
+        setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 60);
+      }
+    },
+  });
+
+  function handleTranslate() {
+    if (scenario.trim() === "" || translateMutation.isPending) return;
+    translateMutation.mutate({ conditions: scenario.trim(), loanType });
+  }
+
   function openCardChat(payload: ActiveCard) {
     setActiveCard((prev) => (prev?.id === payload.id ? null : payload));
   }
