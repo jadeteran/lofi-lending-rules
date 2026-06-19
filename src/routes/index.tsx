@@ -159,6 +159,23 @@ function StudyCorner() {
   // Plain-English condition translator.
   const [translations, setTranslations] = useState<TranslatedCondition[] | null>(null);
   const [translatedFrom, setTranslatedFrom] = useState("");
+  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+
+  function copySection(resp: string, items: { c: TranslatedCondition }[]) {
+    const text = items
+      .map(({ c }) => {
+        const parts = [c.title];
+        if (c.plainEnglish?.trim()) parts.push(`Plain English:\n${c.plainEnglish.trim()}`);
+        if (c.docsToProvide?.trim()) parts.push(`Documents to Provide:\n${c.docsToProvide.trim()}`);
+        if (c.keyDetails?.trim()) parts.push(`Important Details & Requirements:\n${c.keyDetails.trim()}`);
+        return parts.join("\n\n");
+      })
+      .join("\n\n────────────\n\n");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedSection(resp);
+      setTimeout(() => setCopiedSection((cur) => (cur === resp ? null : cur)), 1500);
+    });
+  }
 
   const translateMutation = useMutation({
     mutationFn: (vars: { conditions: string; loanType: string; attachments: Attachment[] }) =>
@@ -660,6 +677,13 @@ function StudyCorner() {
                     <span className="text-xs text-[var(--lofi-muted)]">
                       {items.length} condition{items.length === 1 ? "" : "s"}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => copySection(resp, items)}
+                      className="ml-auto rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+                    >
+                      {copiedSection === resp ? "Copied!" : "Copy section"}
+                    </button>
                   </div>
                   <div className="grid grid-cols-1 gap-6">
                     {items.map(({ c, i }) => (
