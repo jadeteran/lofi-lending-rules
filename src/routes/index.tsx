@@ -677,6 +677,13 @@ function StudyCorner() {
                     <span className="text-xs text-[var(--lofi-muted)]">
                       {items.length} condition{items.length === 1 ? "" : "s"}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => copySection(resp, items)}
+                      className="ml-auto rounded-full border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] px-3 py-1 text-xs font-bold text-[var(--lofi-blue-deep)] shadow-[var(--lofi-shadow)] transition hover:-translate-y-0.5"
+                    >
+                      {copiedSection === resp ? "Copied!" : "Copy section"}
+                    </button>
                   </div>
                   <div className="grid grid-cols-1 gap-6">
                     {items.map(({ c, i }) => (
