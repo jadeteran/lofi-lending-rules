@@ -159,6 +159,23 @@ function StudyCorner() {
   // Plain-English condition translator.
   const [translations, setTranslations] = useState<TranslatedCondition[] | null>(null);
   const [translatedFrom, setTranslatedFrom] = useState("");
+  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+
+  function copySection(resp: string, items: { c: TranslatedCondition }[]) {
+    const text = items
+      .map(({ c }) => {
+        const parts = [c.title];
+        if (c.plainEnglish?.trim()) parts.push(`Plain English:\n${c.plainEnglish.trim()}`);
+        if (c.docsToProvide?.trim()) parts.push(`Documents to Provide:\n${c.docsToProvide.trim()}`);
+        if (c.keyDetails?.trim()) parts.push(`Important Details & Requirements:\n${c.keyDetails.trim()}`);
+        return parts.join("\n\n");
+      })
+      .join("\n\n────────────\n\n");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedSection(resp);
+      setTimeout(() => setCopiedSection((cur) => (cur === resp ? null : cur)), 1500);
+    });
+  }
 
   const translateMutation = useMutation({
     mutationFn: (vars: { conditions: string; loanType: string; attachments: Attachment[] }) =>
