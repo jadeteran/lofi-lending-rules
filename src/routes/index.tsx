@@ -164,13 +164,40 @@ function StudyCorner() {
   function copySection(resp: string, items: { c: TranslatedCondition }[]) {
     const text = items
       .map(({ c }) => {
-        const parts = [c.title];
-        if (c.plainEnglish?.trim()) parts.push(`Plain English:\n${c.plainEnglish.trim()}`);
-        if (c.docsToProvide?.trim()) parts.push(`Documents to Provide:\n${c.docsToProvide.trim()}`);
-        if (c.keyDetails?.trim()) parts.push(`Important Details & Requirements:\n${c.keyDetails.trim()}`);
-        return parts.join("\n\n");
+        const lines: string[] = [c.title.trim()];
+        if (c.plainEnglish?.trim()) {
+          lines.push("");
+          lines.push(`What the Underwriter Needs: ${c.plainEnglish.trim()}`);
+        }
+        if (c.docsToProvide?.trim()) {
+          lines.push("");
+          const docs = c.docsToProvide
+            .split(/\r?\n|;/)
+            .map((d) => d.replace(/^[-•*\s]+/, "").trim())
+            .filter(Boolean);
+          if (docs.length > 1) {
+            lines.push("Required Docs:");
+            docs.forEach((d) => lines.push(`  • ${d}`));
+          } else {
+            lines.push(`Required Docs: ${docs[0] ?? c.docsToProvide.trim()}`);
+          }
+        }
+        if (c.keyDetails?.trim()) {
+          lines.push("");
+          const details = c.keyDetails
+            .split(/\r?\n/)
+            .map((d) => d.replace(/^[-•*\s]+/, "").trim())
+            .filter(Boolean);
+          if (details.length > 1) {
+            lines.push("Important Details:");
+            details.forEach((d) => lines.push(`  • ${d}`));
+          } else {
+            lines.push(`Important Details: ${details[0] ?? c.keyDetails.trim()}`);
+          }
+        }
+        return lines.join("\n");
       })
-      .join("\n\n────────────\n\n");
+      .join("\n\n──────────────────────\n\n");
     navigator.clipboard.writeText(text).then(() => {
       setCopiedSection(resp);
       setTimeout(() => setCopiedSection((cur) => (cur === resp ? null : cur)), 1500);
