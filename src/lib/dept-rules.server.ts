@@ -58,18 +58,15 @@ export async function readDeptRules(): Promise<DeptRule[]> {
 
 export async function writeDeptRule(rule: DeptRule): Promise<void> {
   const sb = getSupabase();
-  // Case-insensitive title is the natural key (enforced by a unique index on
-  // lower(title)); upsert so re-learning a rule overwrites the prior mapping.
-  const { error } = await sb
-    .from("dept_rules")
-    .upsert(
-      {
-        title: rule.title,
-        keywords: rule.keywords,
-        responsibility: rule.responsibility,
-        updated_at: rule.updatedAt,
-      },
-      { onConflict: "title", ignoreDuplicates: false },
-    );
+  // Case-insensitive title is the natural key. Delete any prior mapping for the
+  // same title (the unique index on lower(title) is an expression index that
+  // PostgREST upsert can't target), then insert the fresh rule.
+  await sb.from("dept_rules").delete().ilike("title", rule.title);
+  const { error } = await sb.from("dept_rules").insert({
+    title: rule.title,
+    keywords: rule.keywords,
+    responsibility: rule.responsibility,
+    updated_at: rule.updatedAt,
+  });
   if (error) throw new Error(`dept_rules write failed: ${error.message}`);
 }
