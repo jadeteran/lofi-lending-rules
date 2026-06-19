@@ -1,12 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
 // Server-only persistence for learned condition→responsibility rules.
-// We avoid a dedicated table (the external Supabase is managed without a
-// migrations workflow here) and instead keep all learned rules inside a single
-// sentinel row of public.saved_scenarios, keyed by selected_program.
+// Stored in a dedicated table: public.dept_rules (see db/migrations/0001_dept_rules_table.sql).
 // This file is *.server.ts so it never ships to the client.
-
-export const DEPT_SENTINEL = "__dept_rules__";
 
 export const RESPONSIBILITIES = ["LO", "Processor", "Borrower", "Title", "Closing", "Other"] as const;
 export type Responsibility = (typeof RESPONSIBILITIES)[number];
@@ -44,14 +40,17 @@ export async function readDeptRules(): Promise<DeptRule[]> {
   try {
     const sb = getSupabase();
     const { data, error } = await sb
-      .from("saved_scenarios")
-      .select("analysis_output")
-      .eq("selected_program", DEPT_SENTINEL)
-      .limit(1)
-      .maybeSingle();
+      .from("dept_rules")
+      .select("title, keywords, responsibility, updated_at")
+      .order("updated_at", { ascending: true })
+      .limit(300);
     if (error || !data) return [];
-    const out = data.analysis_output as { rules?: unknown } | null;
-    return Array.isArray(out?.rules) ? (out!.rules as DeptRule[]) : [];
+    return data.map((row: Record<string, unknown>) => ({
+      title: String(row.title ?? ""),
+      keywords: String(row.keywords ?? ""),
+      responsibility: String(row.responsibility ?? ""),
+      updatedAt: String(row.updated_at ?? ""),
+    }));
   } catch {
     return [];
   }
@@ -59,28 +58,15 @@ export async function readDeptRules(): Promise<DeptRule[]> {
 
 export async function writeDeptRule(rule: DeptRule): Promise<void> {
   const sb = getSupabase();
-  const existing = await readDeptRules();
-  const norm = (s: string) => s.toLowerCase().trim();
-  const filtered = existing.filter((r) => norm(r.title) !== norm(rule.title));
-  const next = [...filtered, rule].slice(-300);
-
-  const { data } = await sb
-    .from("saved_scenarios")
-    .select("id")
-    .eq("selected_program", DEPT_SENTINEL)
-    .limit(1)
-    .maybeSingle();
-
-  if (data?.id) {
-    await sb
-      .from("saved_scenarios")
-      .update({ analysis_output: { rules: next } })
-      .eq("id", data.id);
-  } else {
-    await sb.from("saved_scenarios").insert({
-      raw_scenario: "",
-      selected_program: DEPT_SENTINEL,
-      analysis_output: { rules: next },
-    });
-  }
+  // Case-insensitive title is the natural key. Delete any prior mapping for the
+  // same title (the unique index on lower(title) is an expression index that
+  // PostgREST upsert can't target), then insert the fresh rule.
+  await sb.from("dept_rules").delete().ilike("title", rule.title);
+  const { error } = await sb.from("dept_rules").insert({
+    title: rule.title,
+    keywords: rule.keywords,
+    responsibility: rule.responsibility,
+    updated_at: rule.updatedAt,
+  });
+  if (error) throw new Error(`dept_rules write failed: ${error.message}`);
 }
