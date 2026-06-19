@@ -162,46 +162,98 @@ function StudyCorner() {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
 
   function copySection(resp: string, items: { c: TranslatedCondition }[]) {
-    const text = items
-      .map(({ c }) => {
-        const lines: string[] = [c.title.trim()];
-        if (c.plainEnglish?.trim()) {
-          lines.push("");
-          lines.push(`What the Underwriter Needs: ${c.plainEnglish.trim()}`);
+    const esc = (s: string) =>
+      s
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    // Bold a leading "Label:" segment (e.g. "Rent Loss: ...") in a detail line.
+    const labelHtml = (s: string) => {
+      const m = s.match(/^([^:]{1,40}):\s*(.*)$/);
+      if (m) return `<strong>${esc(m[1])}:</strong> ${esc(m[2])}`;
+      return esc(s);
+    };
+    const splitBullets = (s: string, sep: RegExp) =>
+      s
+        .split(sep)
+        .map((d) => d.replace(/^[-•*\s]+/, "").trim())
+        .filter(Boolean);
+
+    const htmlParts: string[] = [];
+    const textParts: string[] = [];
+
+    items.forEach(({ c }) => {
+      const h: string[] = [];
+      const t: string[] = [];
+
+      h.push(`<p style="margin:0 0 4px 0;font-weight:700;">${esc(c.title.trim())}</p>`);
+      t.push(c.title.trim());
+
+      if (c.plainEnglish?.trim()) {
+        h.push(
+          `<p style="margin:0 0 8px 0;padding-left:10px;border-left:3px solid #cbd5e1;color:#475569;"><strong>What the Underwriter Needs:</strong> ${esc(
+            c.plainEnglish.trim(),
+          )}</p>`,
+        );
+        t.push("");
+        t.push(`What the Underwriter Needs: ${c.plainEnglish.trim()}`);
+      }
+
+      const docs = c.docsToProvide?.trim() ? splitBullets(c.docsToProvide, /\r?\n|;/) : [];
+      const details = c.keyDetails?.trim() ? splitBullets(c.keyDetails, /\r?\n/) : [];
+
+      if (docs.length || details.length) {
+        const primary = docs[0] ?? "";
+        const extraDocs = docs.slice(1);
+        h.push(`<ul style="margin:0;padding-left:18px;">`);
+        h.push(
+          `<li><strong>Required Docs:</strong>${primary ? " " + esc(primary) : ""}`,
+        );
+        t.push("");
+        t.push(`• Required Docs:${primary ? " " + primary : ""}`);
+
+        const subItems = [...extraDocs, ...details];
+        if (subItems.length) {
+          h.push(`<ul style="margin:4px 0 0 0;padding-left:18px;">`);
+          subItems.forEach((d) => {
+            h.push(`<li>${labelHtml(d)}</li>`);
+            t.push(`    • ${d}`);
+          });
+          h.push(`</ul>`);
         }
-        if (c.docsToProvide?.trim()) {
-          lines.push("");
-          const docs = c.docsToProvide
-            .split(/\r?\n|;/)
-            .map((d) => d.replace(/^[-•*\s]+/, "").trim())
-            .filter(Boolean);
-          if (docs.length > 1) {
-            lines.push("Required Docs:");
-            docs.forEach((d) => lines.push(`  • ${d}`));
-          } else {
-            lines.push(`Required Docs: ${docs[0] ?? c.docsToProvide.trim()}`);
-          }
-        }
-        if (c.keyDetails?.trim()) {
-          lines.push("");
-          const details = c.keyDetails
-            .split(/\r?\n/)
-            .map((d) => d.replace(/^[-•*\s]+/, "").trim())
-            .filter(Boolean);
-          if (details.length > 1) {
-            lines.push("Important Details:");
-            details.forEach((d) => lines.push(`  • ${d}`));
-          } else {
-            lines.push(`Important Details: ${details[0] ?? c.keyDetails.trim()}`);
-          }
-        }
-        return lines.join("\n");
-      })
-      .join("\n\n──────────────────────\n\n");
-    navigator.clipboard.writeText(text).then(() => {
+        h.push(`</li>`);
+        h.push(`</ul>`);
+      }
+
+      htmlParts.push(`<div style="margin:0 0 16px 0;">${h.join("")}</div>`);
+      textParts.push(t.join("\n"));
+    });
+
+    const html = `<div>${htmlParts.join("")}</div>`;
+    const text = textParts.join("\n\n──────────────────────\n\n");
+
+    const done = () => {
       setCopiedSection(resp);
       setTimeout(() => setCopiedSection((cur) => (cur === resp ? null : cur)), 1500);
-    });
+    };
+
+    try {
+      if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+        navigator.clipboard
+          .write([
+            new ClipboardItem({
+              "text/html": new Blob([html], { type: "text/html" }),
+              "text/plain": new Blob([text], { type: "text/plain" }),
+            }),
+          ])
+          .then(done)
+          .catch(() => navigator.clipboard.writeText(text).then(done));
+      } else {
+        navigator.clipboard.writeText(text).then(done);
+      }
+    } catch {
+      navigator.clipboard.writeText(text).then(done);
+    }
   }
 
   const translateMutation = useMutation({
