@@ -287,14 +287,9 @@ Only state a detail if it appears in the provided context; never fabricate names
         messages: [{ role: "user", content }],
       });
 
-      const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-      const start = cleaned.indexOf("{");
-      const end = cleaned.lastIndexOf("}");
-      const jsonStr = start !== -1 && end !== -1 ? cleaned.slice(start, end + 1) : cleaned;
-
-      const parsed = JSON.parse(jsonStr) as Partial<Analysis>;
+      const parsed = parseModelJson(text, AnalysisResponseSchema);
       const doc = parsed.documentation;
-      const fp = parsed.fileProfile as Partial<FileProfile> | undefined;
+      const fp = parsed.fileProfile;
       const recommended =
         parsed.recommendedProgram?.trim() || (isProgramFinder ? "" : data.loanType);
       const clean = (v: unknown) => (typeof v === "string" ? v.trim() : "");
