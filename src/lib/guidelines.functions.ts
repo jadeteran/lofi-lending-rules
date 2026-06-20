@@ -101,6 +101,48 @@ const PreviousReportSchema = z.object({
   fileProfile: FileProfileSchema.optional(),
 });
 
+// Strict (but coercion-tolerant) schema for validating the model's analysis
+// JSON before normalization. flexString accepts a number/boolean where a string
+// is expected, but the overall shape is still enforced.
+const AnalysisResponseDocSchema = z.object({
+  borrowerTasks: flexString.default(""),
+  collaboration: flexString.default(""),
+  loActions: flexString.default(""),
+});
+
+const AnalysisResponseAltSchema = z.object({
+  program: flexString.default(""),
+  status: flexString.default(""),
+  ltvCap: flexString.default(""),
+  benefit: flexString.default(""),
+  vulnerability: flexString.default(""),
+});
+
+const AnalysisResponseFileProfileSchema = z.object({
+  summaryTitle: flexString.default(""),
+  creditScore: flexString.default(""),
+  dti: flexString.default(""),
+  ltv: flexString.default(""),
+  propertyState: flexString.default(""),
+  profileGroup: flexString.default(""),
+});
+
+const AnalysisResponseSchema = z.object({
+  guidelineRequirements: flexString.default(""),
+  roadblocks: flexString.default(""),
+  ltv: flexString.default(""),
+  alternatives: z.array(AnalysisResponseAltSchema).default([]),
+  documentation: AnalysisResponseDocSchema.default({
+    borrowerTasks: "",
+    collaboration: "",
+    loActions: "",
+  }),
+  citations: flexString.default(""),
+  recommendedProgram: flexString.default(""),
+  recommendation: flexString.default(""),
+  fileProfile: AnalysisResponseFileProfileSchema.optional(),
+});
+
 const InputSchema = z
   .object({
     loanType: z.string().min(1),
