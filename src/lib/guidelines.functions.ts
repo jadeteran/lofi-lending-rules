@@ -631,7 +631,7 @@ Only state details present in the source; never invent figures, names, or dates.
 
       const parsed = parseModelJson(text, TranslateResponseSchema);
       const { normalizeResponsibility } = await import("@/lib/dept-rules.server");
-      const conditions: TranslatedCondition[] = parsed.conditions.flatMap((c) => {
+      const conditions: TranslatedCondition[] = (parsed.conditions ?? []).flatMap((c) => {
         const result = TranslatedConditionSchema.safeParse(c ?? {});
         if (!result.success) return []; // skip a malformed item, keep the rest
         const v = result.data;
