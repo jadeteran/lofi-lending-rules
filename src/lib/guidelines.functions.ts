@@ -629,22 +629,24 @@ Only state details present in the source; never invent figures, names, or dates.
       const end = cleaned.lastIndexOf("}");
       const jsonStr = start !== -1 && end !== -1 ? cleaned.slice(start, end + 1) : cleaned;
 
-      const parsed = JSON.parse(jsonStr) as { conditions?: unknown[] };
+      const parsed = parseModelJson(text, TranslateResponseSchema);
       const { normalizeResponsibility } = await import("@/lib/dept-rules.server");
-      const conditions: TranslatedCondition[] = Array.isArray(parsed.conditions)
-        ? parsed.conditions.map((c) => {
-            const v = TranslatedConditionSchema.parse(c ?? {});
-            return {
-              title: v.title.trim() || "Condition",
-              original: v.original.trim() || "—",
-              plainEnglish: v.plainEnglish.trim() || "No translation returned.",
-              reason: v.reason.trim() || "The underwriter needs this to verify the loan file.",
-              docsToProvide: v.docsToProvide.trim() || "- Confirm the required document with your underwriter.",
-              keyDetails: v.keyDetails.trim() || "- No special requirements noted.",
-              responsibility: normalizeResponsibility(v.responsibility),
-            };
-          })
-        : [];
+      const conditions: TranslatedCondition[] = parsed.conditions.flatMap((c) => {
+        const result = TranslatedConditionSchema.safeParse(c ?? {});
+        if (!result.success) return []; // skip a malformed item, keep the rest
+        const v = result.data;
+        return [
+          {
+            title: v.title.trim() || "Condition",
+            original: v.original.trim() || "—",
+            plainEnglish: v.plainEnglish.trim() || "No translation returned.",
+            reason: v.reason.trim() || "The underwriter needs this to verify the loan file.",
+            docsToProvide: v.docsToProvide.trim() || "- Confirm the required document with your underwriter.",
+            keyDetails: v.keyDetails.trim() || "- No special requirements noted.",
+            responsibility: normalizeResponsibility(v.responsibility),
+          },
+        ];
+      });
 
       if (conditions.length === 0) {
         throw new Error("No conditions could be parsed from that text.");
