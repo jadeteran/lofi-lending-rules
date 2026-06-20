@@ -140,6 +140,7 @@ function StudyCorner() {
   const translate = useServerFn(translateConditions);
   const saveFn = useServerFn(saveScenario);
   const listFn = useServerFn(listScenarios);
+  const configFn = useServerFn(getConfigStatus);
   const [loanType, setLoanType] = useState<string>("");
   const [scenario, setScenario] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
