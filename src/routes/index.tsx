@@ -11,6 +11,7 @@ import {
 
 import { analyzeScenario, translateConditions, LOAN_TYPES, RESPONSIBILITIES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage, type TranslatedCondition, type Responsibility } from "@/lib/guidelines.functions";
 import { saveScenario, listScenarios, type HistoryItem } from "@/lib/scenarios.functions";
+import { getConfigStatus } from "@/lib/config.functions";
 import { CardChatPopover, type ActiveCard, type ReportContext } from "@/components/ReportCardChat";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import { LoginPage } from "@/components/LoginPage";
@@ -139,6 +140,7 @@ function StudyCorner() {
   const translate = useServerFn(translateConditions);
   const saveFn = useServerFn(saveScenario);
   const listFn = useServerFn(listScenarios);
+  const configFn = useServerFn(getConfigStatus);
   const [loanType, setLoanType] = useState<string>("");
   const [scenario, setScenario] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -307,6 +309,17 @@ function StudyCorner() {
     queryFn: () => listFn(),
     staleTime: 30_000,
   });
+
+  // Surfaces a clear configuration warning when required server env vars are
+  // missing, instead of silently degrading into empty AI / database states.
+  const configQuery = useQuery({
+    queryKey: ["config-status"],
+    queryFn: () => configFn(),
+    staleTime: 5 * 60_000,
+  });
+  const missingConfig = configQuery.data && !configQuery.data.ok ? configQuery.data.missing : [];
+
+
 
   // Briefly flash the "Saved" indicator, then fade it out.
   useEffect(() => {
@@ -480,6 +493,28 @@ function StudyCorner() {
 
   return (
     <Shell>
+      {missingConfig.length > 0 && (
+        <div
+          role="alert"
+          className="mb-4 flex items-start gap-3 rounded-xl border border-[var(--lofi-peach)] bg-[var(--lofi-card)] px-4 py-3 text-sm shadow-[var(--lofi-shadow)]"
+          style={{ color: "var(--lofi-ink)" }}
+        >
+          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-[var(--lofi-peach)]" />
+          <div>
+            <p className="font-bold text-[var(--lofi-peach)]">Configuration needed</p>
+            <p className="mt-0.5 text-[var(--lofi-muted)]">
+              The assistant can't reach some services because these settings are missing.
+              AI analysis, the condition translator, and saved history may not work until they're added:
+            </p>
+            <ul className="mt-2 list-disc space-y-0.5 pl-5 text-[var(--lofi-ink)]">
+              {missingConfig.map((m) => (
+                <li key={m}>{m}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       <div className="mb-2 flex items-center justify-between gap-2">
         <button
           type="button"

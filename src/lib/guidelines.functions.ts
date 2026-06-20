@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { generateText } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { flexString, parseModelJson } from "@/lib/ai-json";
 
 
 export const PROGRAM_FINDER = "Unsure / Program Finder" as const;
@@ -98,6 +99,48 @@ const PreviousReportSchema = z.object({
   recommendedProgram: z.string().default(""),
   recommendation: z.string().default(""),
   fileProfile: FileProfileSchema.optional(),
+});
+
+// Strict (but coercion-tolerant) schema for validating the model's analysis
+// JSON before normalization. flexString accepts a number/boolean where a string
+// is expected, but the overall shape is still enforced.
+const AnalysisResponseDocSchema = z.object({
+  borrowerTasks: flexString.default(""),
+  collaboration: flexString.default(""),
+  loActions: flexString.default(""),
+});
+
+const AnalysisResponseAltSchema = z.object({
+  program: flexString.default(""),
+  status: flexString.default(""),
+  ltvCap: flexString.default(""),
+  benefit: flexString.default(""),
+  vulnerability: flexString.default(""),
+});
+
+const AnalysisResponseFileProfileSchema = z.object({
+  summaryTitle: flexString.default(""),
+  creditScore: flexString.default(""),
+  dti: flexString.default(""),
+  ltv: flexString.default(""),
+  propertyState: flexString.default(""),
+  profileGroup: flexString.default(""),
+});
+
+const AnalysisResponseSchema = z.object({
+  guidelineRequirements: flexString.default(""),
+  roadblocks: flexString.default(""),
+  ltv: flexString.default(""),
+  alternatives: z.array(AnalysisResponseAltSchema).default([]),
+  documentation: AnalysisResponseDocSchema.default({
+    borrowerTasks: "",
+    collaboration: "",
+    loActions: "",
+  }),
+  citations: flexString.default(""),
+  recommendedProgram: flexString.default(""),
+  recommendation: flexString.default(""),
+  fileProfile: AnalysisResponseFileProfileSchema.optional(),
 });
 
 const InputSchema = z
@@ -244,14 +287,9 @@ Only state a detail if it appears in the provided context; never fabricate names
         messages: [{ role: "user", content }],
       });
 
-      const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-      const start = cleaned.indexOf("{");
-      const end = cleaned.lastIndexOf("}");
-      const jsonStr = start !== -1 && end !== -1 ? cleaned.slice(start, end + 1) : cleaned;
-
-      const parsed = JSON.parse(jsonStr) as Partial<Analysis>;
+      const parsed = parseModelJson(text, AnalysisResponseSchema);
       const doc = parsed.documentation;
-      const fp = parsed.fileProfile as Partial<FileProfile> | undefined;
+      const fp = parsed.fileProfile;
       const recommended =
         parsed.recommendedProgram?.trim() || (isProgramFinder ? "" : data.loanType);
       const clean = (v: unknown) => (typeof v === "string" ? v.trim() : "");
@@ -510,13 +548,19 @@ export type TranslatedCondition = {
 };
 
 const TranslatedConditionSchema = z.object({
-  title: z.string().default(""),
-  original: z.string().default(""),
-  plainEnglish: z.string().default(""),
-  reason: z.string().default(""),
-  docsToProvide: z.string().default(""),
-  keyDetails: z.string().default(""),
-  responsibility: z.string().default(""),
+  title: flexString.default(""),
+  original: flexString.default(""),
+  plainEnglish: flexString.default(""),
+  reason: flexString.default(""),
+  docsToProvide: flexString.default(""),
+  keyDetails: flexString.default(""),
+  responsibility: flexString.default(""),
+});
+
+// Outer envelope the model must return. Items are validated individually below
+// so a single malformed condition doesn't discard the whole batch.
+const TranslateResponseSchema = z.object({
+  conditions: z.array(z.unknown()).default([]),
 });
 
 export const translateConditions = createServerFn({ method: "POST" })
@@ -585,22 +629,24 @@ Only state details present in the source; never invent figures, names, or dates.
       const end = cleaned.lastIndexOf("}");
       const jsonStr = start !== -1 && end !== -1 ? cleaned.slice(start, end + 1) : cleaned;
 
-      const parsed = JSON.parse(jsonStr) as { conditions?: unknown[] };
+      const parsed = parseModelJson(text, TranslateResponseSchema);
       const { normalizeResponsibility } = await import("@/lib/dept-rules.server");
-      const conditions: TranslatedCondition[] = Array.isArray(parsed.conditions)
-        ? parsed.conditions.map((c) => {
-            const v = TranslatedConditionSchema.parse(c ?? {});
-            return {
-              title: v.title.trim() || "Condition",
-              original: v.original.trim() || "—",
-              plainEnglish: v.plainEnglish.trim() || "No translation returned.",
-              reason: v.reason.trim() || "The underwriter needs this to verify the loan file.",
-              docsToProvide: v.docsToProvide.trim() || "- Confirm the required document with your underwriter.",
-              keyDetails: v.keyDetails.trim() || "- No special requirements noted.",
-              responsibility: normalizeResponsibility(v.responsibility),
-            };
-          })
-        : [];
+      const conditions: TranslatedCondition[] = (parsed.conditions ?? []).flatMap((c) => {
+        const result = TranslatedConditionSchema.safeParse(c ?? {});
+        if (!result.success) return []; // skip a malformed item, keep the rest
+        const v = result.data;
+        return [
+          {
+            title: v.title.trim() || "Condition",
+            original: v.original.trim() || "—",
+            plainEnglish: v.plainEnglish.trim() || "No translation returned.",
+            reason: v.reason.trim() || "The underwriter needs this to verify the loan file.",
+            docsToProvide: v.docsToProvide.trim() || "- Confirm the required document with your underwriter.",
+            keyDetails: v.keyDetails.trim() || "- No special requirements noted.",
+            responsibility: normalizeResponsibility(v.responsibility),
+          },
+        ];
+      });
 
       if (conditions.length === 0) {
         throw new Error("No conditions could be parsed from that text.");
