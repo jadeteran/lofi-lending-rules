@@ -10,7 +10,11 @@ import { z, type ZodType } from "zod";
  */
 export const flexString = z
   .union([z.string(), z.number(), z.boolean(), z.null(), z.undefined()])
-  .transform((v) => (v == null ? "" : String(v)));
+  .transform((v) => (v == null ? "" : String(v))) as unknown as z.ZodEffects<
+  z.ZodString,
+  string,
+  string
+>;
 
 /**
  * Extract the first balanced top-level JSON object from raw model output.
