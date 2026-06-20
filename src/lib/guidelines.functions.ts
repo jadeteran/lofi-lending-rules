@@ -548,13 +548,19 @@ export type TranslatedCondition = {
 };
 
 const TranslatedConditionSchema = z.object({
-  title: z.string().default(""),
-  original: z.string().default(""),
-  plainEnglish: z.string().default(""),
-  reason: z.string().default(""),
-  docsToProvide: z.string().default(""),
-  keyDetails: z.string().default(""),
-  responsibility: z.string().default(""),
+  title: flexString.default(""),
+  original: flexString.default(""),
+  plainEnglish: flexString.default(""),
+  reason: flexString.default(""),
+  docsToProvide: flexString.default(""),
+  keyDetails: flexString.default(""),
+  responsibility: flexString.default(""),
+});
+
+// Outer envelope the model must return. Items are validated individually below
+// so a single malformed condition doesn't discard the whole batch.
+const TranslateResponseSchema = z.object({
+  conditions: z.array(z.unknown()).default([]),
 });
 
 export const translateConditions = createServerFn({ method: "POST" })
