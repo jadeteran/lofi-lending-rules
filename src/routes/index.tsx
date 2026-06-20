@@ -310,6 +310,17 @@ function StudyCorner() {
     staleTime: 30_000,
   });
 
+  // Surfaces a clear configuration warning when required server env vars are
+  // missing, instead of silently degrading into empty AI / database states.
+  const configQuery = useQuery({
+    queryKey: ["config-status"],
+    queryFn: () => configFn(),
+    staleTime: 5 * 60_000,
+  });
+  const missingConfig = configQuery.data && !configQuery.data.ok ? configQuery.data.missing : [];
+
+
+
   // Briefly flash the "Saved" indicator, then fade it out.
   useEffect(() => {
     if (!savedFlash) return;
