@@ -8,7 +8,7 @@ import { z, type ZodType } from "zod";
  * A string field that tolerates a model returning a number/boolean instead of a
  * string (a common malformed-output pattern), but still rejects objects/arrays.
  */
-export const flexString = z.preprocess((v) => {
+export const flexString: z.ZodType<string> = z.preprocess((v) => {
   if (v == null) return "";
   if (typeof v === "string") return v;
   if (typeof v === "number" || typeof v === "boolean") return String(v);
