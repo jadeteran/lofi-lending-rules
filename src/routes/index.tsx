@@ -496,12 +496,12 @@ function StudyCorner() {
       {missingConfig.length > 0 && (
         <div
           role="alert"
-          className="mb-4 flex items-start gap-3 rounded-xl border border-[var(--lofi-clay)] bg-[var(--lofi-card)] px-4 py-3 text-sm shadow-[var(--lofi-shadow)]"
+          className="mb-4 flex items-start gap-3 rounded-xl border border-[var(--lofi-peach)] bg-[var(--lofi-card)] px-4 py-3 text-sm shadow-[var(--lofi-shadow)]"
           style={{ color: "var(--lofi-ink)" }}
         >
-          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-[var(--lofi-clay)]" />
+          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-[var(--lofi-peach)]" />
           <div>
-            <p className="font-bold text-[var(--lofi-clay)]">Configuration needed</p>
+            <p className="font-bold text-[var(--lofi-peach)]">Configuration needed</p>
             <p className="mt-0.5 text-[var(--lofi-muted)]">
               The assistant can't reach some services because these settings are missing.
               AI analysis, the condition translator, and saved history may not work until they're added:
