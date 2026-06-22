@@ -768,23 +768,36 @@ function StudyCorner() {
             </button>
           </div>
           <div className="flex flex-col gap-8">
-            {RESPONSIBILITIES.map((resp) => {
+            {SECTION_ORDER.map((resp) => {
               const items = translations
                 .map((c, i) => ({ c, i }))
                 .filter((x) => x.c.responsibility === resp);
               if (items.length === 0) return null;
+              const isOpen = openSections[resp] ?? false;
               return (
-                <div key={resp}>
-                  <div className="mb-3 flex items-center gap-2">
-                    <span
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-cream)]"
-                      style={{ backgroundColor: "var(--lofi-blue-deep)" }}
+                <div key={resp} className="rounded-2xl border border-[var(--lofi-cream-deep)] bg-[var(--lofi-card)] shadow-[var(--lofi-shadow)]">
+                  <div className="flex items-center gap-2 px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => setOpenSections((prev) => ({ ...prev, [resp]: !isOpen }))}
+                      aria-expanded={isOpen}
+                      className="flex flex-1 items-center gap-2 text-left"
                     >
-                      {DEPT_LABELS[resp]}
-                    </span>
-                    <span className="text-xs text-[var(--lofi-muted)]">
-                      {items.length} condition{items.length === 1 ? "" : "s"}
-                    </span>
+                      <ChevronDown
+                        size={18}
+                        className="text-[var(--lofi-blue-deep)] transition-transform"
+                        style={{ transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)" }}
+                      />
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-[var(--lofi-cream)]"
+                        style={{ backgroundColor: "var(--lofi-blue-deep)" }}
+                      >
+                        {DEPT_LABELS[resp]}
+                      </span>
+                      <span className="text-xs text-[var(--lofi-muted)]">
+                        {items.length} condition{items.length === 1 ? "" : "s"}
+                      </span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => copySection(resp, items)}
@@ -793,17 +806,19 @@ function StudyCorner() {
                       {copiedSection === resp ? "Copied!" : "Copy section"}
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 gap-6">
-                    {items.map(({ c, i }) => (
-                      <ConditionCard
-                        key={i}
-                        index={i}
-                        condition={c}
-                        onOpenChat={openCardChat}
-                        activeId={activeCard?.id ?? null}
-                      />
-                    ))}
-                  </div>
+                  {isOpen && (
+                    <div className="grid grid-cols-1 gap-6 px-4 pb-4">
+                      {items.map(({ c, i }) => (
+                        <ConditionCard
+                          key={i}
+                          index={i}
+                          condition={c}
+                          onOpenChat={openCardChat}
+                          activeId={activeCard?.id ?? null}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
