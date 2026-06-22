@@ -6,7 +6,7 @@ import {
   Clock, Settings, LogOut, Paperclip, Sparkles, Check, X, ArrowRight,
   FileText, Diamond, ClipboardList, Construction, BarChart3, BookOpen,
   Compass, Shuffle, FolderOpen, Briefcase, Hand, Handshake, Headphones,
-  CheckCircle2, Circle, AlertTriangle, Ban, Languages, ListChecks, type LucideIcon,
+  CheckCircle2, Circle, AlertTriangle, Ban, Languages, ListChecks, ChevronDown, type LucideIcon,
 } from "lucide-react";
 
 import { analyzeScenario, translateConditions, LOAN_TYPES, RESPONSIBILITIES, type Analysis, type Documentation, type AlternativeProgram, type FileProfile, type ReportChatMessage, type TranslatedCondition, type Responsibility } from "@/lib/guidelines.functions";
