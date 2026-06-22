@@ -191,16 +191,6 @@ function StudyCorner() {
       h.push(`<p style="margin:0 0 4px 0;font-weight:700;">${esc(c.title.trim())}</p>`);
       t.push(c.title.trim());
 
-      if (c.plainEnglish?.trim()) {
-        h.push(
-          `<p style="margin:0 0 8px 0;padding-left:10px;border-left:3px solid #cbd5e1;color:#475569;"><strong>What the Underwriter Needs:</strong> ${esc(
-            c.plainEnglish.trim(),
-          )}</p>`,
-        );
-        t.push("");
-        t.push(`What the Underwriter Needs: ${c.plainEnglish.trim()}`);
-      }
-
       const docs = c.docsToProvide?.trim() ? splitBullets(c.docsToProvide, /\r?\n|;/) : [];
       const details = c.keyDetails?.trim() ? splitBullets(c.keyDetails, /\r?\n/) : [];
 
