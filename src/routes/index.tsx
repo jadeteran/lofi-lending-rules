@@ -165,6 +165,7 @@ function StudyCorner() {
   const [translations, setTranslations] = useState<TranslatedCondition[] | null>(null);
   const [translatedFrom, setTranslatedFrom] = useState("");
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   function copySection(resp: string, items: { c: TranslatedCondition }[]) {
     const esc = (s: string) =>
