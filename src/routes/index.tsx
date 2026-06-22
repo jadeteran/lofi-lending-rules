@@ -121,6 +121,9 @@ const DEPT_LABELS: Record<Responsibility, string> = {
   Other: "Other / Unassigned",
 };
 
+// Order sections appear in the translated-conditions report.
+const SECTION_ORDER: Responsibility[] = ["Borrower", "LO", "Processor", "Title", "Closing", "Other"];
+
 
 
 function shortLabel(text: string) {
