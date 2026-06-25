@@ -3,6 +3,9 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "overrides": {
+    "undici": "^7.28.0"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
