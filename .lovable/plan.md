@@ -1,39 +1,32 @@
 ## Goal
 
-Make the "Copy section" button produce output that, when pasted, looks exactly like the reference image: a condition title, a "What the Underwriter Needs:" callout, and a "Required Docs:" bullet with bold-labeled nested sub-bullets (e.g. "Rent Loss:", "Total Funds Needed:", "Critical Action:"). Also stop the translator from renaming documents — it must reuse the underwriter's exact verbiage (e.g. keep "Purchase Agreement").
+Resolve the high (and related medium) severity advisories flagged against `@tanstack/react-start@1.167.50`. The root cause is the bundled `undici` HTTP client (pulled in transitively via `@tanstack/start-server-core`) plus an advisory against the TanStack Start server core itself.
 
-## What the image format requires
+## Current state
 
-```text
-Hazard Insurance with Rent Loss
-| What the Underwriter Needs: An updated insurance declarations page...
+- `@tanstack/react-start`: `^1.167.50` (latest is `1.168.26`)
+- `@tanstack/react-router`: `^1.168.25` (latest is `1.170.16`)
+- `@tanstack/router-plugin`: `^1.167.28` (latest is `1.168.18`)
+- Transitive `undici`: `7.24.8`
 
-• Required Docs: Evidence of Insurance / Declarations Page
-    • Rent Loss: Minimum 6 months coverage required
-    • Hazards: Must explicitly include Wind and Hail coverage
-    • Mortgagee Clause: Select Portfolio Servicing, INC.
-```
+## Approach
 
-The labels ("What the Underwriter Needs:", "Required Docs:", "Rent Loss:", "Critical Action:") are **bold**, items are bulleted, and important details are nested under Required Docs. Plain text alone can't carry bold/bullets, so the copy must write **rich text (HTML)** to the clipboard.
+1. **Bump the TanStack packages** to their latest patched releases so the advisory against `@tanstack/start-server-core` (server-function request deserialization, GHSA-9m65-766c-r333) is picked up:
+   - `@tanstack/react-start` → latest
+   - `@tanstack/react-router` → latest
+   - `@tanstack/router-plugin` → latest
+   (Keep them on compatible minor versions so the Vite plugin and runtime stay aligned.)
 
-## Changes
+2. **Force a patched `undici`** for the remaining undici advisories. Since `undici` is transitive, add a `package.json` `overrides` entry pinning `undici` to the latest patched release, then reinstall so the lockfile dedupes to the safe version.
 
-### 1. `src/routes/index.tsx` — rewrite `copySection` (lines 164-205)
-
-- Build an **HTML string** plus a **plain-text fallback** and write both via `navigator.clipboard.write([new ClipboardItem({ "text/html": ..., "text/plain": ... })])`, falling back to `writeText` if `ClipboardItem` is unavailable. This makes pasted output retain the formatting from the image (Word, Google Docs, email, etc.).
-- Per condition, emit:
-  - Condition `title` as a bold heading line.
-  - A "What the Underwriter Needs:" line (bold label) using `plainEnglish`, styled as the left-bar callout.
-  - A "Required Docs:" bullet (bold label). The first/primary doc from `docsToProvide` sits on the Required Docs line; remaining docs become bullets.
-  - `keyDetails` rendered as **nested sub-bullets** under Required Docs. For any detail shaped like `Label: value`, the `Label:` portion is bolded (matching "Rent Loss:", "Total Funds Needed:", "Critical Action:").
-- Keep excluding `original` and `reason` (unchanged from current behavior).
-- Keep the existing "Copied!" feedback via `copiedSection`.
-
-### 2. `src/lib/guidelines.functions.ts` — translator prompt (around lines 547-550)
-
-Add an explicit instruction to the translate system prompt: when naming documents, **preserve the underwriter's exact terminology** from the source (do not substitute synonyms or "plain-English" renames — e.g. if the condition says "Purchase Agreement", call it "Purchase Agreement", not "purchase contract"). Also nudge `keyDetails` toward concise `Label: value` bullets so they render cleanly as the bold-labeled sub-bullets in the new format.
+3. **Verify**: reinstall, confirm `undici` resolves to the patched version everywhere (`node_modules` tree), run the dependency scan again, and confirm the dev server / build still boots (the auto-run build check covers compilation).
 
 ## Technical notes
 
-- No backend/schema changes beyond the prompt wording; data shape (`title`, `plainEnglish`, `docsToProvide`, `keyDetails`) is unchanged.
-- Clipboard write is frontend-only and guarded for browsers without `ClipboardItem`.
+- Updates are minor/patch within `1.x`, so no API breakage is expected, but TanStack Start, Router, and the Router plugin must move together to avoid version-skew errors in route-tree generation.
+- If a TanStack bump alone already pulls a clean `undici`, the `overrides` entry becomes a harmless belt-and-suspenders guarantee; if not, it's what actually closes the undici advisories.
+- After the fix lands, mark the `vulnerable_dependencies_high` (and `vulnerable_dependencies_medium`) findings as fixed.
+
+## Risk
+
+Low. All changes are dependency version bumps with no source-code changes. The main thing to watch is that the app still builds and the dev server starts after the TanStack version alignment.
