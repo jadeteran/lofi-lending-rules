@@ -1,0 +1,9 @@
+# Loan Condition Translator
+
+> An AI underwriting assistant that analyzes mortgage loan scenarios and translates lender conditions into plain-English, responsibility-grouped action items for borrowers, loan officers, processors, title, and closing teams.
+
+This single-page web app lets users paste loan conditions or upload screenshots, then uses AI to analyze scenarios, suggest alternative loan programs, and produce a translated-conditions report organized by who is responsible for each task.
+
+## Pages
+
+- [Home](/): Analyze loan scenarios and translate underwriting conditions into plain-English action items grouped by responsibility.
