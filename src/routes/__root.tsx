@@ -83,6 +83,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "AI underwriting assistant that translates mortgage loan conditions into plain-English action items grouped by who's responsible." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "UnderwriterPro — Mortgage Underwriting Analysis" },
+      { name: "twitter:description", content: "AI underwriting assistant that translates mortgage loan conditions into plain-English action items grouped by who's responsible." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/lhwqgVlb0zU2odUo1mu2301Z4Yy1/social-images/social-1782353938868-Screenshot_2026-06-24_191830.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/lhwqgVlb0zU2odUo1mu2301Z4Yy1/social-images/social-1782353938868-Screenshot_2026-06-24_191830.webp" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
