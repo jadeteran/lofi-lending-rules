@@ -30,7 +30,8 @@ export const Route = createFileRoute("/")({
         content:
           "A calm AI study corner for loan officers. Drop in a tough stip or loan scenario and get instant guideline requirements, roadblocks, LTV thresholds, and the docs to request.",
       },
-      { property: "og:title", content: "AI Guideline Assistant" },
+      { property: "og:title", content: "UnderwriterPro — Mortgage Underwriting Analysis" },
+      { property: "og:url", content: "/" },
       {
         property: "og:description",
         content:
